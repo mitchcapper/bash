@@ -23,26 +23,25 @@
 
 #include "config.h"
 
-#include "bashtypes.h"
-#include "filecntl.h"
 
+#ifdef _WIN32
+#include <sys/wait.h>
+#include <sys/resource.h>
+#define HAVE_UNISTD_H
+#endif
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
-
-#include <stdio.h>
-#include <signal.h>
-#include <errno.h>
-
 #if defined (BUFFERED_INPUT)
 #  include "input.h"
 #endif
+
 
 /* Need to include this up here for *_TTY_DRIVER definitions. */
 #include "shtty.h"
 
 #include "bashintl.h"
-
+#include "osfixes.h"
 #include "shell.h"
 #include "jobs.h"
 #include "execute_cmd.h"
@@ -50,7 +49,13 @@
 
 #include "builtins/builtext.h"	/* for wait_builtin */
 #include "builtins/common.h"
+#include "bashtypes.h"
+#include "filecntl.h"
 
+
+#include <stdio.h>
+#include <signal.h>
+#include <errno.h>
 #define DEFAULT_CHILD_MAX 4096
 
 #if defined (_POSIX_VERSION) || !defined (HAVE_KILLPG)
@@ -521,12 +526,15 @@ make_child (command, flags)
       sigemptyset (&set);
       sigaddset (&set, SIGTERM);
       sigemptyset (&oset);
+#ifndef _WIN32
       sigprocmask (SIG_BLOCK, &set, &oset);
       set_signal_handler (SIGTERM, SIG_DFL);
+#endif
     }
 
   /* Create the child, handle severe errors.  Retry on EAGAIN. */
   forksleep = 1;
+#ifndef _WIN32
   while ((pid = fork ()) < 0 && errno == EAGAIN && forksleep < FORKSLEEP_MAX)
     {
       sys_error ("fork: retry");
@@ -543,12 +551,14 @@ make_child (command, flags)
 #endif /* HAVE_WAITPID */
       forksleep <<= 1;
     }
-
+#endif
   if (pid != 0)
     if (interactive_shell)
       {
+#ifndef _WIN32
 	set_signal_handler (SIGTERM, SIG_IGN);
 	sigprocmask (SIG_SETMASK, &oset, (sigset_t *)NULL);
+#endif
       }
 
   if (pid < 0)
@@ -655,6 +665,7 @@ wait_for_single_pid (pid, flags)
      pid_t pid;
      int flags;
 {
+#ifndef _WIN32
   pid_t got_pid;
   WAIT status;
   int pstatus;
@@ -703,6 +714,9 @@ wait_for_single_pid (pid, flags)
   CHECK_WAIT_INTR;
 
   return (got_pid > 0 ? process_exit_status (status) : -1);
+#else
+  return (-1);
+#endif
 }
 
 /* Wait for all of the shell's children to exit.  Called by the `wait'
@@ -825,6 +839,7 @@ wait_for (pid, flags)
      pid_t pid;
      int flags;
 {
+#ifndef _WIN32
   int return_val, pstatus;
   pid_t got_pid;
   WAIT status;
@@ -938,6 +953,9 @@ wait_for (pid, flags)
     get_new_window_size (0, (int *)0, (int *)0);
 
   return (return_val);
+#else
+  return (-1);
+#endif
 }
 
 /* Send PID SIGNAL.  Returns -1 on failure, 0 on success.  If GROUP is non-zero,
@@ -982,6 +1000,7 @@ get_tty_state ()
 int
 set_tty_state ()
 {
+#ifndef _WIN32
   int tty;
 
   tty = input_tty ();
@@ -991,6 +1010,7 @@ set_tty_state ()
 	return 0;
       ttsetattr (tty, &shell_tty_info);
     }
+#endif
   return 0;
 }
 

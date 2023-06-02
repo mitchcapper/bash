@@ -43,7 +43,12 @@
 #include "parser.h"
 #include "input.h"	/* for save_token_state, restore_token_state */
 #include "jobs.h"
+#include "osfixes.h"
+#ifndef _WIN32
 #include "signames.h"
+#else
+#include <signal.h>
+#endif
 #include "builtins.h"
 #include "builtins/common.h"
 #include "builtins/builtext.h"
@@ -147,9 +152,9 @@ void
 initialize_traps ()
 {
   register int i;
-
+#ifndef _WIN32
   initialize_signames();
-
+#endif
   trap_list[EXIT_TRAP] = trap_list[DEBUG_TRAP] = trap_list[ERROR_TRAP] = trap_list[RETURN_TRAP] = (char *)NULL;
   sigmodes[EXIT_TRAP] = sigmodes[DEBUG_TRAP] = sigmodes[ERROR_TRAP] = sigmodes[RETURN_TRAP] = SIG_INHERITED;
   original_signals[EXIT_TRAP] = IMPOSSIBLE_TRAP_HANDLER;
@@ -177,9 +182,10 @@ initialize_traps ()
   sigmodes[SIGINT] &= ~SIG_HARD_IGNORE;
 #endif
 
+#if defined(SIGQUIT)
   GETORIGSIG (SIGQUIT);
   sigmodes[SIGQUIT] |= SIG_SPECIAL;
-
+#endif
   if (interactive)
     {
       GETORIGSIG (SIGTERM);
@@ -923,7 +929,13 @@ restore_default_signal (sig)
      sentinel to determine whether or not disposition is reset to the default
      while the trap handler is executing. */
   if (((sigmodes[sig] & SIG_TRAPPED) == 0) &&
-      (sig != SIGCHLD || (sigmodes[sig] & SIG_INPROGRESS) == 0 || trap_list[sig] != (char *)IMPOSSIBLE_TRAP_HANDLER))
+      (
+#if defined (SIGCHLD)
+        sig != SIGCHLD
+#else
+    1
+#endif
+       || (sigmodes[sig] & SIG_INPROGRESS) == 0 || trap_list[sig] != (char *)IMPOSSIBLE_TRAP_HANDLER))
     return;
 
   /* Only change the signal handler for SIG if it allows it. */

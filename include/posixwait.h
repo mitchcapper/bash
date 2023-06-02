@@ -17,7 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with Bash.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef _WIN32
+#define _POSIX_VERSION
+#define HAVE_SYS_WAIT_H
+#endif
 #if !defined (_POSIXWAIT_H_)
 #  define _POSIXWAIT_H_
 

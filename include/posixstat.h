@@ -21,6 +21,7 @@
 
 /* This file should be included instead of <sys/stat.h>.
    It relies on the local sys/stat.h to work though. */
+#ifndef _WIN32
 #if !defined (_POSIXSTAT_H_)
 #define _POSIXSTAT_H_
 
@@ -160,3 +161,9 @@
 #define S_IXUGO		(S_IXUSR | S_IXGRP | S_IXOTH)
 
 #endif /* _POSIXSTAT_H_ */
+#else
+#define S_IRUGO		(S_IRUSR | S_IRGRP | S_IROTH)
+#define S_IWUGO		(S_IWUSR | S_IWGRP | S_IWOTH)
+#define S_IXUGO		(S_IXUSR | S_IXGRP | S_IXOTH)
+
+#endif

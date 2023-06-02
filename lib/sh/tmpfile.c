@@ -91,6 +91,20 @@ get_sys_tmpdir ()
   return sys_tmpdir;
 }
 
+#ifdef _WIN32
+static char *
+get_tmpdir (flags)
+     int flags;
+{
+  char *dest_dir=NULL;
+  char *env = getenv ("TMPDIR");
+  if ((env && *env) == false)
+    env = getenv ("TMP");
+  dest_dir = (env && *env ? env : "/temp");
+  return dest_dir;
+}
+#else
+
 static char *
 get_tmpdir (flags)
      int flags;
@@ -113,7 +127,7 @@ get_tmpdir (flags)
 
   return tdir;
 }
-
+#endif
 static void
 sh_seedrand ()
 {

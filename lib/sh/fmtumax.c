@@ -19,9 +19,10 @@
 */
 
 #include <config.h>
-
+#ifndef _WIN32
 #define LONG	intmax_t
 #define UNSIGNED_LONG	uintmax_t
+#endif
 #define fmtulong	fmtumax
 
 #include "fmtulong.c"

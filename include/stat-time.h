@@ -30,6 +30,7 @@
 #  include <pthread.h>
 #endif
 
+#ifndef _WIN32
 #ifndef HAVE_STRUCT_TIMESPEC
 struct timespec
 {
@@ -37,7 +38,7 @@ struct timespec
   long int tv_nsec;
 };
 #endif
-
+#endif
 /* STAT_TIMESPEC (ST, ST_XTIM) is the ST_XTIM member for *ST of type
    struct timespec, if available.  If not, then STAT_TIMESPEC_NS (ST,
    ST_XTIM) is the nanosecond component of the ST_XTIM member for *ST,

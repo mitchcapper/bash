@@ -31,7 +31,12 @@
 #  include "posixselect.h"
 #  include "stat-time.h"
 #endif
-
+#ifdef _WIN32
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 #include "sig.h"
 #include "bashjmp.h"
 #include "xmalloc.h"
@@ -103,7 +108,9 @@ shtimer_set (sh_timer *t, time_t sec, long usec)
   if (t->flags & SHTIMER_ALARM)
     {
       t->alrmflag = 0;		/* just paranoia */
+#ifndef _WIN32
       t->old_handler = set_signal_handler (SIGALRM, t->alrm_handler);
+#endif
       t->flags |= SHTIMER_SIGSET;
       falarm (t->tmout.tv_sec = sec, t->tmout.tv_usec = usec);
       t->flags |= SHTIMER_ALRMSET;
@@ -135,7 +142,9 @@ shtimer_unset (sh_timer *t)
 	falarm (0, 0);
       if (t->old_handler && (t->flags & SHTIMER_SIGSET))
 	{
+#ifndef _WIN32
 	  set_signal_handler (SIGALRM, t->old_handler);
+#endif
 	  t->flags &= ~SHTIMER_SIGSET;
 	  t->old_handler = 0;
 	}

@@ -20,15 +20,18 @@
 
 #include "config.h"
 
+
+#if defined (HAVE_UNISTD_H) || defined(_WIN32)
+#  include <unistd.h>
+#endif
+
+#ifndef _WIN32
 #include <stdc.h>
 
 #include "bashtypes.h"
 
-#if defined (HAVE_UNISTD_H)
-#  include <unistd.h>
-#endif
-
 #include <sys/ioctl.h>
+#endif
 
 /* Try to find the definitions of `struct winsize' and TIOGCWINSZ */
 
@@ -73,9 +76,13 @@ extern int shell_tty;
 extern int interactive_shell;
 extern int no_line_editing;
 extern int bash_readline_initialized;
+#ifndef _WIN32
 extern void rl_set_screen_size PARAMS((int, int));
 #endif
+#endif
+#ifndef _WIN32
 extern void sh_set_lines_and_columns PARAMS((int, int));
+#endif
 
 void
 get_new_window_size (from_sig, rp, cp)

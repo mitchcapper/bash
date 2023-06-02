@@ -21,7 +21,8 @@
 
 #if !defined (_COMMAND_H_)
 #define _COMMAND_H_
-
+#include "config.h"
+#include <sys/types.h>
 #include "stdc.h"
 
 /* Instructions describing what kind of thing to do for a redirection. */

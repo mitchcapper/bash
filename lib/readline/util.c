@@ -56,6 +56,9 @@
 #include "rlprivate.h"
 #include "xmalloc.h"
 #include "rlshell.h"
+#ifdef PREFER_STDARG
+#undef PREFER_VARARGS
+#endif
 
 /* **************************************************************** */
 /*								    */
@@ -239,10 +242,11 @@ _rl_ttymsg (va_alist)
 #endif
 {
   va_list args;
+#ifndef _WIN32
 #if defined (PREFER_VARARGS)
   char *format;
 #endif
-
+#endif
 #if defined (PREFER_STDARG)
   va_start (args, format);
 #else

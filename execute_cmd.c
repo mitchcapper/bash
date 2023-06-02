@@ -27,6 +27,14 @@
 #include <stdio.h>
 #include "chartypes.h"
 #include "bashtypes.h"
+#ifdef _WIN32
+#define HAVE_GETRUSAGE
+#define HAVE_SYS_TIMES_H
+#define HAVE_UNISTD_H
+#define HAVE_GETTIMEOFDAY
+#define HAVE_SYS_RESOURCE_H
+#include <sys/time.h>
+#endif
 #if !defined (_MINIX) && defined (HAVE_SYS_FILE_H)
 #  include <sys/file.h>
 #endif
@@ -2071,8 +2079,9 @@ coproc_dispose (cp)
 
   if (cp == 0)
     return;
-
+#ifndef _WIN32
   BLOCK_SIGNAL (SIGCHLD, set, oset);
+#endif
   cp->c_lock = 3;
   coproc_unsetvars (cp);
   FREE (cp->c_name);
@@ -2415,9 +2424,9 @@ execute_coproc (command, pipe_in, pipe_out, fds_to_close)
 
   sh_openpipe ((int *)&rpipe);	/* 0 = parent read, 1 = child write */
   sh_openpipe ((int *)&wpipe); /* 0 = child read, 1 = parent write */
-
+#ifndef _WIN32
   BLOCK_SIGNAL (SIGCHLD, set, oset);
-
+#endif
   coproc_pid = make_child (p = savestring (tcmd), FORK_ASYNC);
 
   if (coproc_pid == 0)
@@ -5552,9 +5561,10 @@ setup_async_signals ()
 	 the value of original_signals to SIG_IGN. Posix interpretation 751. */
       get_original_signal (SIGINT);
       set_signal_handler (SIGINT, SIG_IGN);
-
+#ifndef _WIN32
       get_original_signal (SIGQUIT);
       set_signal_handler (SIGQUIT, SIG_IGN);
+#endif
     }
 }
 

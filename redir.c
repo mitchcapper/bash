@@ -41,7 +41,10 @@
 #if !defined (errno)
 extern int errno;
 #endif
-
+#ifdef _WIN32
+#include <alloca.h>
+#endif
+#include "osfixes.h"
 #include "bashansi.h"
 #include "bashintl.h"
 #include "memalloc.h"

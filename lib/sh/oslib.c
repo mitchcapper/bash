@@ -36,7 +36,12 @@
 #include <posixstat.h>
 #include <filecntl.h>
 #include <bashansi.h>
-
+#include "osfixes.h"
+#ifdef _WIN32
+#include <sys/stat.h>
+#  include <unistd.h>
+#define HAVE_MKFIFO
+#endif
 #if !defined (HAVE_KILLPG)
 #  include <signal.h>
 #endif

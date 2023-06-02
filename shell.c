@@ -28,6 +28,13 @@
 #include "config.h"
 
 #include "bashtypes.h"
+#ifdef _WIN32
+#define HAVE_UNISTD_H
+#include <sys/resource.h>
+#include <sys/time.h>
+#  include <unistd.h>
+#endif
+
 #if !defined (_MINIX) && defined (HAVE_SYS_FILE_H)
 #  include <sys/file.h>
 #endif
@@ -1315,6 +1322,7 @@ maybe_make_restricted (name)
 static int
 uidget ()
 {
+  #ifndef _WIN32
   uid_t u;
 
   u = getuid ();
@@ -1333,13 +1341,16 @@ uidget ()
   /* See whether or not we are running setuid or setgid. */
   return (current_user.uid != current_user.euid) ||
 	   (current_user.gid != current_user.egid);
+#else
+  return 0;
+#endif
 }
 
 void
 disable_priv_mode ()
 {
   int e;
-
+#ifndef _WIN32
 #if HAVE_SETRESUID
   if (setresuid (current_user.uid, current_user.uid, current_user.uid) < 0)
 #else
@@ -1362,6 +1373,7 @@ disable_priv_mode ()
 
   current_user.euid = current_user.uid;
   current_user.egid = current_user.gid;
+#endif
 }
 
 #if defined (WORDEXP_OPTION)
@@ -1891,6 +1903,7 @@ init_interactive_script ()
 void
 get_current_user_info ()
 {
+#ifndef _WIN32
   struct passwd *entry;
 
   /* Don't fetch this more than once. */
@@ -1911,15 +1924,18 @@ get_current_user_info ()
 	}
       else
 	{
+#endif
 	  current_user.user_name = _("I have no name!");
-	  current_user.user_name = savestring (current_user.user_name);
+//	  current_user.user_name = savestring (current_user.user_name);
 	  current_user.shell = savestring ("/bin/sh");
 	  current_user.home_dir = savestring ("/");
+#ifndef _WIN32
 	}
 #if defined (HAVE_GETPWENT)
       endpwent ();
 #endif
     }
+#endif
 }
 
 /* Do whatever is necessary to initialize the shell.
@@ -1951,11 +1967,15 @@ shell_initialize ()
   /* It's highly unlikely that this will change. */
   if (current_host_name == 0)
     {
+#ifndef _WIN32
       /* Initialize current_host_name. */
       if (gethostname (hostname, 255) < 0)
 	current_host_name = "??host??";
       else
 	current_host_name = savestring (hostname);
+#else
+  current_host_name = "??host??";
+#endif
     }
 
   /* Initialize the stuff in current_user that comes from the password

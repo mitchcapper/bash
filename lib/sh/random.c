@@ -29,13 +29,16 @@
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
+#ifdef _WIN32
+#include <sys/time.h>
+#endif
 #include "filecntl.h"
 
 #include <stdio.h>
 #include "bashansi.h"
 
 #include "shell.h"
-
+#include "osfixes.h"
 extern time_t shell_start_time;
 
 extern int last_random_value;

@@ -200,9 +200,9 @@ extern void clock_t_to_secs ();
 extern void print_clock_t ();
 
 /* Declarations for functions defined in lib/sh/dprintf.c */
-#if !defined (HAVE_DPRINTF)
-extern void dprintf PARAMS((int, const char *, ...))  __attribute__((__format__ (printf, 2, 3)));
-#endif
+// #if !defined (HAVE_DPRINTF)
+// extern void dprintf PARAMS((int, const char *, ...))  __attribute__((__format__ (printf, 2, 3)));
+// #endif
 
 /* Declarations for functions defined in lib/sh/fmtulong.c */
 #define FL_PREFIX     0x01    /* add 0x, 0X, or 0 prefix as appropriate */
@@ -238,9 +238,9 @@ extern int fpurge PARAMS((FILE *stream));
 #endif /* NEED_FPURGE_DECL */
 
 /* Declarations for functions defined in lib/sh/getcwd.c */
-#if !defined (HAVE_GETCWD)
-extern char *getcwd PARAMS((char *, size_t));
-#endif
+// #if !defined (HAVE_GETCWD)
+// extern char *getcwd PARAMS((char *, size_t));
+// #endif
 
 /* Declarations for functions defined in lib/sh/input_avail.c */
 extern int input_avail PARAMS((int));
@@ -260,32 +260,32 @@ extern char *uitos PARAMS((uintmax_t));
 
 extern char *sh_makepath PARAMS((const char *, const char *, int));
 
-/* declarations for functions defined in lib/sh/mbscasecmp.c */
-#if !defined (HAVE_MBSCASECMP)
-extern char *mbscasecmp PARAMS((const char *, const char *));
-#endif
+// /* declarations for functions defined in lib/sh/mbscasecmp.c */
+// #if !defined (HAVE_MBSCASECMP)
+// extern char *mbscasecmp PARAMS((const char *, const char *));
+// #endif
 
-/* declarations for functions defined in lib/sh/mbschr.c */
-#if !defined (HAVE_MBSCHR)
-extern char *mbschr PARAMS((const char *, int));
-#endif
+// /* declarations for functions defined in lib/sh/mbschr.c */
+// #if !defined (HAVE_MBSCHR)
+// extern char *mbschr PARAMS((const char *, int));
+// #endif
 
-/* declarations for functions defined in lib/sh/mbscmp.c */
-#if !defined (HAVE_MBSCMP)
-extern char *mbscmp PARAMS((const char *, const char *));
-#endif
+// /* declarations for functions defined in lib/sh/mbscmp.c */
+// #if !defined (HAVE_MBSCMP)
+// extern char *mbscmp PARAMS((const char *, const char *));
+// #endif
 
-/* declarations for functions defined in lib/sh/netconn.c */
-extern int isnetconn PARAMS((int));
+// /* declarations for functions defined in lib/sh/netconn.c */
+// extern int isnetconn PARAMS((int));
 
-/* declarations for functions defined in lib/sh/netopen.c */
-extern int netopen PARAMS((char *));
+// /* declarations for functions defined in lib/sh/netopen.c */
+// extern int netopen PARAMS((char *));
 
-/* Declarations for  functions defined in lib/sh/oslib.c */
+// /* Declarations for  functions defined in lib/sh/oslib.c */
 
-#if !defined (HAVE_DUP2) || defined (DUP2_BROKEN)
-extern int dup2 PARAMS((int, int));
-#endif
+// #if !defined (HAVE_DUP2) || defined (DUP2_BROKEN)
+// extern int dup2 PARAMS((int, int));
+// #endif
 
 #if !defined (HAVE_GETDTABLESIZE)
 extern int getdtablesize PARAMS((void));
@@ -315,7 +315,7 @@ extern int brand PARAMS((void));
 extern void sbrand PARAMS((unsigned long));		/* set bash random number generator. */
 extern void seedrand PARAMS((void));			/* seed generator randomly */
 extern void seedrand32 PARAMS((void));
-extern u_bits32_t get_urandom32 PARAMS((void));
+//extern u_bits32_t get_urandom32 PARAMS((void));
 
 /* declarations for functions defined in lib/sh/setlinebuf.c */
 #ifdef NEED_SH_SETLINEBUF_DECL
@@ -352,31 +352,31 @@ extern int sh_contains_quotes PARAMS((const char *));
 extern int spname PARAMS((char *, char *));
 extern char *dirspell PARAMS((char *));
 
-/* declarations for functions defined in lib/sh/strcasecmp.c */
-#if !defined (HAVE_STRCASECMP)
-extern int strncasecmp PARAMS((const char *, const char *, size_t));
-extern int strcasecmp PARAMS((const char *, const char *));
-#endif /* HAVE_STRCASECMP */
+// /* declarations for functions defined in lib/sh/strcasecmp.c */
+// #if !defined (HAVE_STRCASECMP)
+// extern int strncasecmp PARAMS((const char *, const char *, size_t));
+// extern int strcasecmp PARAMS((const char *, const char *));
+// #endif /* HAVE_STRCASECMP */
 
 /* declarations for functions defined in lib/sh/strcasestr.c */
-#if ! HAVE_STRCASESTR
-extern char *strcasestr PARAMS((const char *, const char *));
-#endif
+// #if ! HAVE_STRCASESTR
+// extern char *strcasestr PARAMS((const char *, const char *));
+// #endif
 
 /* declarations for functions defined in lib/sh/strchrnul.c */
 #if ! HAVE_STRCHRNUL
 extern char *strchrnul PARAMS((const char *, int));
 #endif
 
-/* declarations for functions defined in lib/sh/strerror.c */
-#if !defined (HAVE_STRERROR) && !defined (strerror)
-extern char *strerror PARAMS((int));
-#endif
+// /* declarations for functions defined in lib/sh/strerror.c */
+// #if !defined (HAVE_STRERROR) && !defined (strerror)
+// extern char *strerror PARAMS((int));
+// #endif
 
 /* declarations for functions defined in lib/sh/strftime.c */
-#if !defined (HAVE_STRFTIME) && defined (NEED_STRFTIME_DECL)
-extern size_t strftime PARAMS((char *, size_t, const char *, const struct tm *));
-#endif
+// #if !defined (HAVE_STRFTIME) && defined (NEED_STRFTIME_DECL)
+// extern size_t strftime PARAMS((char *, size_t, const char *, const struct tm *));
+// #endif
 
 /* declarations for functions and structures defined in lib/sh/stringlist.c */
 
@@ -421,40 +421,40 @@ extern void strvec_sort PARAMS((char **, int));
 extern char **strvec_from_word_list PARAMS((WORD_LIST *, int, int, int *));
 extern WORD_LIST *strvec_to_word_list PARAMS((char **, int, int));
 
-/* declarations for functions defined in lib/sh/strnlen.c */
-#if !defined (HAVE_STRNLEN)
-extern size_t strnlen PARAMS((const char *, size_t));
-#endif
+// /* declarations for functions defined in lib/sh/strnlen.c */
+// #if !defined (HAVE_STRNLEN)
+// extern size_t strnlen PARAMS((const char *, size_t));
+// #endif
 
-/* declarations for functions defined in lib/sh/strpbrk.c */
-#if !defined (HAVE_STRPBRK)
-extern char *strpbrk PARAMS((const char *, const char *));
-#endif
+// /* declarations for functions defined in lib/sh/strpbrk.c */
+// #if !defined (HAVE_STRPBRK)
+// extern char *strpbrk PARAMS((const char *, const char *));
+// #endif
 
-/* declarations for functions defined in lib/sh/strtod.c */
-#if !defined (HAVE_STRTOD)
-extern double strtod PARAMS((const char *, char **));
-#endif
+// /* declarations for functions defined in lib/sh/strtod.c */
+// #if !defined (HAVE_STRTOD)
+// extern double strtod PARAMS((const char *, char **));
+// #endif
 
-/* declarations for functions defined in lib/sh/strtol.c */
-#if !HAVE_DECL_STRTOL
-extern long strtol PARAMS((const char *, char **, int));
-#endif
+// /* declarations for functions defined in lib/sh/strtol.c */
+// #if !HAVE_DECL_STRTOL
+// extern long strtol PARAMS((const char *, char **, int));
+// #endif
 
-/* declarations for functions defined in lib/sh/strtoll.c */
-#if defined (HAVE_LONG_LONG_INT) && !HAVE_DECL_STRTOLL
-extern long long strtoll PARAMS((const char *, char **, int));
-#endif
+// /* declarations for functions defined in lib/sh/strtoll.c */
+// #if defined (HAVE_LONG_LONG_INT) && !HAVE_DECL_STRTOLL
+// extern long long strtoll PARAMS((const char *, char **, int));
+// #endif
 
-/* declarations for functions defined in lib/sh/strtoul.c */
-#if !HAVE_DECL_STRTOUL
-extern unsigned long strtoul PARAMS((const char *, char **, int));
-#endif
+// /* declarations for functions defined in lib/sh/strtoul.c */
+// #if !HAVE_DECL_STRTOUL
+// extern unsigned long strtoul PARAMS((const char *, char **, int));
+// #endif
 
-/* declarations for functions defined in lib/sh/strtoull.c */
-#if defined (HAVE_UNSIGNED_LONG_LONG_INT) && !HAVE_DECL_STRTOULL
-extern unsigned long long strtoull PARAMS((const char *, char **, int));
-#endif
+// /* declarations for functions defined in lib/sh/strtoull.c */
+// #if defined (HAVE_UNSIGNED_LONG_LONG_INT) && !HAVE_DECL_STRTOULL
+// extern unsigned long long strtoull PARAMS((const char *, char **, int));
+// #endif
 
 /* declarations for functions defined in lib/sh/strimax.c */
 #if !HAVE_DECL_STRTOIMAX

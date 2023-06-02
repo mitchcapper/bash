@@ -41,7 +41,13 @@
  * between sys/ioctl.h and termios.h.  Ditto for the test against SunOS4
  * and the undefining of several symbols.
  */
-      
+struct ttyjunked {
+         char    sg_ispeed;
+         char    sg_ospeed;
+        char    sg_erase;
+        char    sg_kill;
+        short   sg_flags;
+    };
 #ifdef TERMIOS_TTY_DRIVER
 #  if (defined (SunOS4) || defined (SunOS5)) && !defined (_POSIX_SOURCE)
 #    define _POSIX_SOURCE
@@ -58,8 +64,9 @@
 #    include <termio.h>
 #    define TTYSTRUCT struct termio
 #  else	/* NEW_TTY_DRIVER */
-#    include <sgtty.h>
-#    define TTYSTRUCT struct sgttyb
+// #    include <sgtty.h>
+// #    define TTYSTRUCT struct sgttyb
+   #define TTYSTRUCT struct ttyjunked
 #  endif
 #endif
 

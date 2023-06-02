@@ -86,8 +86,12 @@
 extern int errno;
 #endif /* !errno */
 
+#include "osfixes.h"
+
+#ifndef _WIN32
 #if !defined (HAVE_KILLPG)
 extern int killpg PARAMS((pid_t, int));
+#endif
 #endif
 
 #if !DEFAULT_CHILD_MAX
@@ -144,7 +148,7 @@ extern int killpg PARAMS((pid_t, int));
 
 /* If the system needs it, REINSTALL_SIGCHLD_HANDLER will reinstall the
    handler for SIGCHLD. */
-#if defined (MUST_REINSTALL_SIGHANDLERS)
+#if defined (MUST_REINSTALL_SIGHANDLERS) && ! defined(_WIN32)
 #  define REINSTALL_SIGCHLD_HANDLER signal (SIGCHLD, sigchld_handler)
 #else
 #  define REINSTALL_SIGCHLD_HANDLER
@@ -351,6 +355,7 @@ static char retcode_name_buffer[64];
 
 /* These are definitions to map POSIX 1003.1 functions onto existing BSD
    library functions and system calls. */
+#ifndef _WIN32
 #define setpgid(pid, pgrp)	setpgrp (pid, pgrp)
 #define tcsetpgrp(fd, pgrp)	ioctl ((fd), TIOCSPGRP, &(pgrp))
 
@@ -361,11 +366,13 @@ tcgetpgrp (fd)
   pid_t pgrp;
 
   /* ioctl will handle setting errno correctly. */
+#if defined (TIOCGPGRP)
   if (ioctl (fd, TIOCGPGRP, &pgrp) < 0)
+#endif
     return (-1);
   return (pgrp);
 }
-
+#endif
 #endif /* !_POSIX_VERSION */
 
 /* Initialize the global job stats structure and other bookkeeping variables */
@@ -670,11 +677,11 @@ stop_pipeline (async, deferred)
 
       newjob->state = any_running ? JRUNNING : (any_stopped ? JSTOPPED : JDEAD);
       newjob->wd = job_working_directory ();
+#if defined (JOB_CONTROL)
       newjob->deferred = deferred;
-
       newjob->j_cleanup = (sh_vptrfunc_t *)NULL;
       newjob->cleanarg = (PTR_T) NULL;
-
+#endif
       jobs[i] = newjob;
       if (newjob->state == JDEAD && (newjob->flags & J_FOREGROUND))
 	setjstatus (i);
@@ -1205,8 +1212,9 @@ reset_job_indices ()
     }
 }
       
+
 /* Delete all DEAD jobs that the user had received notification about. */
-static void
+void
 cleanup_dead_jobs ()
 {
   register int i;
@@ -1428,10 +1436,10 @@ delete_job (job_index, dflags)
 	  js.c_reaped = 0;
 	}
     }
-
+#if defined (JOB_CONTROL)
   if (temp->deferred)
     dispose_command (temp->deferred);
-
+#endif
   free (temp);
 
   js.j_njobs--;
@@ -1634,7 +1642,9 @@ terminate_current_pipeline ()
   if (pipeline_pgrp && pipeline_pgrp != shell_pgrp)
     {
       killpg (pipeline_pgrp, SIGTERM);
+#if defined(SIGCONT)
       killpg (pipeline_pgrp, SIGCONT);
+#endif
     }
 }
 
@@ -1650,7 +1660,9 @@ terminate_stopped_jobs ()
       if (jobs[i] && STOPPED (i))
 	{
 	  killpg (jobs[i]->pgrp, SIGTERM);
+#if defined(SIGCONT)
 	  killpg (jobs[i]->pgrp, SIGCONT);
+#endif
 	}
     }
 }
@@ -1669,9 +1681,11 @@ hangup_all_jobs ()
 	{
 	  if  (jobs[i]->flags & J_NOHUP)
 	    continue;
+#ifndef _WIN32
 	  killpg (jobs[i]->pgrp, SIGHUP);
 	  if (STOPPED (i))
 	    killpg (jobs[i]->pgrp, SIGCONT);
+#endif
 	}
     }
 }
@@ -2134,7 +2148,9 @@ make_child (command, flags)
   /* Block SIGTERM here and unblock in child after fork resets the
      set of pending signals. */
   sigemptyset (&set);
+#if defined(SIGCHLD)
   sigaddset (&set, SIGCHLD);
+#endif
   sigaddset (&set, SIGINT);
   sigaddset (&set, SIGTERM);
 
@@ -2159,7 +2175,7 @@ make_child (command, flags)
       (!async_p || default_buffered_input > 0))
     sync_buffered_stream (default_buffered_input);
 #endif /* BUFFERED_INPUT */
-
+#ifndef _WIN32
   /* Create the child, handle severe errors.  Retry on EAGAIN. */
   while ((pid = fork ()) < 0 && errno == EAGAIN && forksleep < FORKSLEEP_MAX)
     {
@@ -2180,7 +2196,7 @@ make_child (command, flags)
 	break;
       sigprocmask (SIG_SETMASK, &set, (sigset_t *)NULL);
     }
-
+#endif
   if (pid != 0)
     if (interactive_shell)
       set_signal_handler (SIGTERM, oterm);
@@ -2246,9 +2262,10 @@ make_child (command, flags)
 	     this would have for the first child) is an error.  Section
 	     B.4.3.3, p. 237 also covers this, in the context of job control
 	     shells. */
+#ifndef _WIN32
 	  if (setpgid (mypid, pipeline_pgrp) < 0)
 	    sys_error (_("child setpgid (%ld to %ld)"), (long)mypid, (long)pipeline_pgrp);
-
+#endif
 	  /* By convention (and assumption above), if
 	     pipeline_pgrp == shell_pgrp, we are making a child for
 	     command substitution.
@@ -2310,7 +2327,9 @@ make_child (command, flags)
 	     the POSIX 1003.1 standard, where it discusses job control and
 	     shells.  It is done to avoid possible race conditions. (Ref.
 	     1003.1 Rationale, section B.4.3.3, page 236). */
+#ifndef _WIN32
 	  setpgid (pid, pipeline_pgrp);
+#endif
 	}
       else
 	{
@@ -2357,9 +2376,15 @@ make_child (command, flags)
 void
 ignore_tty_job_signals ()
 {
+#if defined(SIGTSTP)
   set_signal_handler (SIGTSTP, SIG_IGN);
+#endif
+#if defined(SIGTTIN)
   set_signal_handler (SIGTTIN, SIG_IGN);
+#endif
+#if defined(SIGTTOU)
   set_signal_handler (SIGTTOU, SIG_IGN);
+#endif
 }
 
 /* Reset the tty-generated job control signals to SIG_DFL unless that signal
@@ -2369,6 +2394,7 @@ ignore_tty_job_signals ()
 void
 default_tty_job_signals ()
 {
+#ifndef _WIN32
   if (signal_is_trapped (SIGTSTP) == 0 && signal_is_hard_ignored (SIGTSTP))
     set_signal_handler (SIGTSTP, SIG_IGN);
   else
@@ -2383,12 +2409,14 @@ default_tty_job_signals ()
     set_signal_handler (SIGTTOU, SIG_IGN);
   else
     set_signal_handler (SIGTTOU, SIG_DFL);
+#endif
 }
 
 /* Called once in a parent process. */
 void
 get_original_tty_job_signals ()
 {
+#ifndef _WIN32
   static int fetched = 0;
 
   if (fetched == 0)
@@ -2407,6 +2435,7 @@ get_original_tty_job_signals ()
 	}
       fetched = 1;
     }
+#endif
 }
 
 /* When we end a job abnormally, or if we stop a job, we set the tty to the
@@ -2416,8 +2445,10 @@ get_original_tty_job_signals ()
 static TTYSTRUCT shell_tty_info;
 
 #if defined (NEW_TTY_DRIVER)
+#ifndef _WIN32
 static struct tchars shell_tchars;
 static struct ltchars shell_ltchars;
+#endif
 #endif /* NEW_TTY_DRIVER */
 
 #if defined (NEW_TTY_DRIVER) && defined (DRAIN_OUTPUT)
@@ -2476,9 +2507,11 @@ get_tty_state ()
   if (tty != -1)
     {
 #if defined (NEW_TTY_DRIVER)
+#ifndef _WIN32
       ioctl (tty, TIOCGETP, &shell_tty_info);
       ioctl (tty, TIOCGETC, &shell_tchars);
       ioctl (tty, TIOCGLTC, &shell_ltchars);
+#endif
 #endif /* NEW_TTY_DRIVER */
 
 #if defined (TERMIO_TTY_DRIVER)
@@ -2516,9 +2549,11 @@ set_tty_state ()
 #  if defined (DRAIN_OUTPUT)
       draino (tty, shell_tty_info.sg_ospeed);
 #  endif /* DRAIN_OUTPUT */
+#ifndef _WIN32
       ioctl (tty, TIOCSETN, &shell_tty_info);
       ioctl (tty, TIOCSETC, &shell_tchars);
       ioctl (tty, TIOCSLTC, &shell_ltchars);
+#endif
 #endif /* NEW_TTY_DRIVER */
 
 #if defined (TERMIO_TTY_DRIVER)
@@ -3634,7 +3669,9 @@ start_job (job, foreground)
   if (already_running == 0)
     {
       jobs[job]->flags |= J_NOTIFIED;
+#ifndef _WIN32
       killpg (jobs[job]->pgrp, SIGCONT);
+#endif
     }
 
   if (foreground)
@@ -3703,8 +3740,10 @@ kill_pid (pid, sig, group)
 		  if (PALIVE (p) == 0)
 		    continue;		/* avoid pid recycling problem */
 		  kill (p->pid, sig);
+#ifndef _WIN32
 		  if (PEXITED (p) && (sig == SIGTERM || sig == SIGHUP))
 		    kill (p->pid, SIGCONT);
+#endif
 		  p = p->next;
 		}
 	      while  (p != jobs[job]->pipe);
@@ -3712,6 +3751,7 @@ kill_pid (pid, sig, group)
 	  else
 	    {
 	      result = killpg (jobs[job]->pgrp, sig);
+#ifndef _WIN32
 	      if (p && STOPPED (job) && (sig == SIGTERM || sig == SIGHUP))
 		killpg (jobs[job]->pgrp, SIGCONT);
 	      /* If we're continuing a stopped job via kill rather than bg or
@@ -3722,6 +3762,7 @@ kill_pid (pid, sig, group)
 		  jobs[job]->flags &= ~J_FOREGROUND;
 		  jobs[job]->flags |= J_NOTIFIED;
 		}
+#endif
 	    }
 	}
       else
@@ -3928,6 +3969,7 @@ itrace("waitchld: waitpid returns %d block = %d children_exited = %d", pid, bloc
 	reset_current ();
     }
 
+#ifndef _WIN32
   /* Call a SIGCHLD trap handler for each child that exits, if one is set. */
   if (children_exited &&
       (signal_is_trapped (SIGCHLD) || trap_list[SIGCHLD] == (char *)IMPOSSIBLE_TRAP_HANDLER) &&
@@ -3960,7 +4002,7 @@ itrace("waitchld: waitpid returns %d block = %d children_exited = %d", pid, bloc
       else
 	queue_sigchld_trap (children_exited);
     }
-
+#endif
   /* We have successfully recorded the useful information about this process
      that has just changed state.  If we notify asynchronously, and the job
      that this process belongs to is no longer running, then notify the user
@@ -4007,7 +4049,9 @@ set_job_status_and_cleanup (job)
 #endif
 	{
 	  any_stopped = 1;
+#ifndef _WIN32
 	  any_tstped |= job_control && (WSTOPSIG (child->status) == SIGTSTP);
+#endif
 	}
       child = child->next;
     }
@@ -4052,11 +4096,13 @@ set_job_status_and_cleanup (job)
 	 with `cleanarg' as the single argument, then set the function
 	 pointer to NULL so it is not inadvertently called twice.  The
 	 cleanup function is responsible for deallocating cleanarg. */
+#if defined (JOB_CONTROL)
       if (jobs[job]->j_cleanup)
 	{
 	  (*jobs[job]->j_cleanup) (jobs[job]->cleanarg);
 	  jobs[job]->j_cleanup = (sh_vptrfunc_t *)NULL;
 	}
+#endif
     }
 
   /*
@@ -4185,6 +4231,7 @@ void
 run_sigchld_trap (nchild)
      int nchild;
 {
+#if defined(SIGCHLD)
   char *trap_command;
   int i;
 
@@ -4225,6 +4272,7 @@ run_sigchld_trap (nchild)
 
   run_unwind_frame ("SIGCHLD trap");
   running_trap = 0;
+#endif
 }
 
 /* Function to call when you want to notify people of changes
@@ -4245,8 +4293,10 @@ notify_of_job_status ()
   if (old_ttou != 0)
     {
       sigemptyset (&set);
+#ifndef _WIN32
       sigaddset (&set, SIGCHLD);
       sigaddset (&set, SIGTTOU);
+#endif
       sigemptyset (&oset);
       sigprocmask (SIG_BLOCK, &set, &oset);
     }
@@ -4388,7 +4438,9 @@ initialize_job_control (force)
       job_control = 0;
       original_pgrp = NO_PID;
       shell_tty = fileno (stderr);
+#ifndef _WIN32
       terminal_pgrp = tcgetpgrp (shell_tty);	/* for checking later */
+#endif
     }
   else
     {
@@ -4416,11 +4468,14 @@ initialize_job_control (force)
       if (shell_pgrp == 0)
 	{
 	  shell_pgrp = getpid ();
+#ifndef _WIN32
 	  setpgid (0, shell_pgrp);
+
 	  if (shell_tty != -1)
 	    tcsetpgrp (shell_tty, shell_pgrp);
+#endif
 	}
-
+#ifndef _WIN32
       tty_sigs = 0;
       while ((terminal_pgrp = tcgetpgrp (shell_tty)) != -1)
 	{
@@ -4443,7 +4498,7 @@ initialize_job_control (force)
 	    }
 	  break;
 	}
-
+#endif
       if (terminal_pgrp == -1)
 	t_errno = errno;
 
@@ -4457,13 +4512,13 @@ initialize_job_control (force)
 	{
 	  original_pgrp = shell_pgrp;
 	  shell_pgrp = getpid ();
-
+#ifndef _WIN32
 	  if ((original_pgrp != shell_pgrp) && (setpgid (0, shell_pgrp) < 0))
 	    {
 	      sys_error (_("initialize_job_control: setpgid"));
 	      shell_pgrp = original_pgrp;
 	    }
-
+#endif
 	  job_control = 1;
 
 	  /* If (and only if) we just set our process group to our pid,
@@ -4478,21 +4533,25 @@ initialize_job_control (force)
 	      if (give_terminal_to (shell_pgrp, 0) < 0)
 		{
 		  t_errno = errno;
+#ifndef _WIN32
 		  setpgid (0, original_pgrp);
+#endif
 		  shell_pgrp = original_pgrp;
 		  errno = t_errno;
 		  sys_error (_("cannot set terminal process group (%d)"), shell_pgrp);
 		  job_control = 0;
 		}
 	    }
-
+#ifndef _WIN32
 	  if (job_control && ((t = tcgetpgrp (shell_tty)) == -1 || t != shell_pgrp))
 	    {
 	      if (t_errno != -1)
 		errno = t_errno;
 	      sys_error (_("cannot set terminal process group (%d)"), t);
-	      job_control = 0;
+	      job_cont
+        rol = 0;
 	    }
+#endif
 	}
       if (job_control == 0)
 	internal_error (_("no job control in this shell"));
@@ -4503,9 +4562,9 @@ just_bail:
 
   if (shell_tty != fileno (stderr))
     SET_CLOSE_ON_EXEC (shell_tty);
-
+#ifndef _WIN32
   set_signal_handler (SIGCHLD, sigchld_handler);
-
+#endif
   change_flag ('m', job_control ? '-' : '+');
 
   if (interactive)
@@ -4535,6 +4594,7 @@ set_new_line_discipline (tty)
      int tty;
 {
 #if defined (NEW_TTY_DRIVER)
+#ifndef _WIN32
   int ldisc;
 
   if (ioctl (tty, TIOCGETD, &ldisc) < 0)
@@ -4548,6 +4608,9 @@ set_new_line_discipline (tty)
 	return (-1);
     }
   return (0);
+#else
+  return (-1);
+#endif
 #endif /* NEW_TTY_DRIVER */
 
 #if defined (TERMIO_TTY_DRIVER)
@@ -4592,10 +4655,13 @@ initialize_job_signals ()
   if (interactive)
     {
       set_signal_handler (SIGINT, sigint_sighandler);
+#ifndef _WIN32
       set_signal_handler (SIGTSTP, SIG_IGN);
       set_signal_handler (SIGTTOU, SIG_IGN);
       set_signal_handler (SIGTTIN, SIG_IGN);
+#endif
     }
+#if defined(JOB_CONTROL)
   else if (job_control)
     {
       old_tstp = set_signal_handler (SIGTSTP, sigstop_sighandler);
@@ -4604,6 +4670,7 @@ initialize_job_signals ()
     }
   /* Leave disposition unmodified for non-interactive shells without job
      control. */
+#endif
 }
 
 /* Here we handle CONT signals. */
@@ -4612,9 +4679,10 @@ sigcont_sighandler (sig)
      int sig;
 {
   initialize_job_signals ();
+#ifndef _WIN32
   set_signal_handler (SIGCONT, old_cont);
   kill (getpid (), SIGCONT);
-
+#endif
   SIGRETURN (0);
 }
 
@@ -4623,12 +4691,13 @@ static sighandler
 sigstop_sighandler (sig)
      int sig;
 {
+#ifndef _WIN32
   set_signal_handler (SIGTSTP, old_tstp);
   set_signal_handler (SIGTTOU, old_ttou);
   set_signal_handler (SIGTTIN, old_ttin);
 
   old_cont = set_signal_handler (SIGCONT, sigcont_sighandler);
-
+#endif
   give_terminal_to (shell_pgrp, 0);
 
   kill (getpid (), sig);
@@ -4649,13 +4718,15 @@ give_terminal_to (pgrp, force)
   if (job_control || force)
     {
       sigemptyset (&set);
+#ifndef _WIN32
       sigaddset (&set, SIGTTOU);
       sigaddset (&set, SIGTTIN);
       sigaddset (&set, SIGTSTP);
       sigaddset (&set, SIGCHLD);
+#endif
       sigemptyset (&oset);
       sigprocmask (SIG_BLOCK, &set, &oset);
-
+#ifndef _WIN32
       if (tcsetpgrp (shell_tty, pgrp) < 0)
 	{
 	  /* Maybe we should print an error message? */
@@ -4667,6 +4738,7 @@ give_terminal_to (pgrp, force)
 	  e = errno;
 	}
       else
+#endif
 	terminal_pgrp = pgrp;
       sigprocmask (SIG_SETMASK, &oset, (sigset_t *)NULL);
     }
@@ -4685,7 +4757,7 @@ maybe_give_terminal_to (opgrp, npgrp, flags)
      int flags;
 {
   int tpgrp;
-
+#ifndef _WIN32
   tpgrp = tcgetpgrp (shell_tty);
   if (tpgrp < 0 && errno == ENOTTY)
     return -1;
@@ -4700,7 +4772,10 @@ maybe_give_terminal_to (opgrp, npgrp, flags)
       return -1;
     }
   else
-    return (give_terminal_to (npgrp, flags));     
+    return (give_terminal_to (npgrp, flags));
+#else
+  return -1;
+#endif
 }
 
 /* Clear out any jobs in the job array.  This is intended to be used by
@@ -4962,7 +5037,7 @@ set_job_control (arg)
 
   old = job_control;
   job_control = arg;
-
+#ifndef _WIN32
   if (terminal_pgrp == NO_PID && shell_tty >= 0)
     terminal_pgrp = tcgetpgrp (shell_tty);
 
@@ -4971,6 +5046,7 @@ set_job_control (arg)
   if (job_control != old && job_control)
     shell_pgrp = getpgid (0);  
 
+#endif
   running_in_background = (terminal_pgrp != shell_pgrp);
 
 #if 0
@@ -5016,9 +5092,10 @@ end_job_control ()
 
   if (original_pgrp >= 0 && terminal_pgrp != original_pgrp)
     give_terminal_to (original_pgrp, 1);
-
+#ifndef _WIN32
   if (original_pgrp >= 0 && setpgid (0, original_pgrp) == 0)
     shell_pgrp = original_pgrp;
+#endif
 }
 
 /* Restart job control by closing shell tty and reinitializing.  This is
@@ -5065,7 +5142,9 @@ set_maxchild (nchild)
 void
 set_sigchld_handler ()
 {
+  #ifndef _WIN32
   set_signal_handler (SIGCHLD, sigchld_handler);
+#endif
 }
 
 #if defined (PGRP_PIPE)

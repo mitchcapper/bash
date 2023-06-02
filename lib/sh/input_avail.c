@@ -36,7 +36,15 @@
 #if defined (HAVE_PSELECT)
 #  include <signal.h>
 #endif
+#ifdef _WIN32
+#include <sys/select.h>
 
+/* According to earlier standards */
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#endif
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif /* HAVE_UNISTD_H */

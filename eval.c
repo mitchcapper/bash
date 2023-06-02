@@ -380,8 +380,10 @@ read_command ()
 	  tmout_len = atoi (value_cell (tmout_var));
 	  if (tmout_len > 0)
 	    {
+#ifndef _WIN32
 	      old_alrm = set_signal_handler (SIGALRM, alrm_catcher);
 	      alarm (tmout_len);
+#endif
 	    }
 	}
     }
@@ -393,8 +395,10 @@ read_command ()
 
   if (interactive && tmout_var && (tmout_len > 0))
     {
+#ifndef _WIN32
       alarm(0);
       set_signal_handler (SIGALRM, old_alrm);
+#endif
     }
 
   return (result);

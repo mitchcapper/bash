@@ -37,7 +37,17 @@
 
 /* Other (BSD) machines use sgtty. */
 #if defined (NEW_TTY_DRIVER)
+#ifndef _WIN32
 #  include <sgtty.h>
+#else
+struct ttyjunked {
+         char    sg_ispeed;
+         char    sg_ospeed;
+        char    sg_erase;
+        char    sg_kill;
+        short   sg_flags;
+    };
+#endif
 #endif
 
 #include "rlwinsize.h"

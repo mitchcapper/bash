@@ -82,7 +82,9 @@ typedef void *alias_t;
 
 #if defined (PROMPT_STRING_DECODE)
 #  ifndef _MINIX
+#ifndef _WIN32
 #    include <sys/param.h>
+#endif
 #  endif
 #  include <time.h>
 #  if defined (TM_IN_SYS_TIME)

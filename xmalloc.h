@@ -34,7 +34,9 @@
 #endif
 
 #endif /* PTR_T */
-
+#ifdef _WIN32
+#undef USING_BASH_MALLOC
+#endif
 /* Allocation functions in xmalloc.c */
 extern PTR_T xmalloc PARAMS((size_t));
 extern PTR_T xrealloc PARAMS((void *, size_t));

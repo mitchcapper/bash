@@ -27,6 +27,9 @@
 #include "stdc.h"
 
 #include "posixwait.h"
+#ifdef _WIN32
+#include <sys/wait.h>
+#endif
 
 /* Defines controlling the fashion in which jobs are listed. */
 #define JLIST_STANDARD       0
@@ -59,7 +62,9 @@
 #define PS_RUNNING	1
 #define PS_STOPPED	2
 #define PS_RECYCLED	4
-
+#ifdef _WIN32
+#define WAIT int
+#endif
 /* Each child of the shell is remembered in a STRUCT PROCESS.  A circular
    chain of such structures is a pipeline. */
 typedef struct process {
@@ -205,10 +210,10 @@ struct procchain {
 #define FORK_NOJOB	2		/* don't put process in separate pgrp */
 #define FORK_NOTERM	4		/* don't give terminal to any pgrp */
 
-/* System calls. */
-#if !defined (HAVE_UNISTD_H)
-extern pid_t fork (), getpid (), getpgrp ();
-#endif /* !HAVE_UNISTD_H */
+// /* System calls. */
+// #if !defined (HAVE_UNISTD_H)
+// extern pid_t fork (), getpid (), getpgrp ();
+// #endif /* !HAVE_UNISTD_H */
 
 /* Stuff from the jobs.c file. */
 extern struct jobstats js;

@@ -97,8 +97,13 @@ do { \
 #  define BLOCK_CHILD(nvar, ovar) BLOCK_SIGNAL (SIGCHLD, nvar, ovar)
 #  define UNBLOCK_CHILD(ovar) UNBLOCK_SIGNAL(ovar)
 #else /* !HAVE_POSIX_SIGNALS */
+#ifndef _WIN32
 #  define BLOCK_CHILD(nvar, ovar) ovar = sigblock (sigmask (SIGCHLD))
 #  define UNBLOCK_CHILD(ovar) sigsetmask (ovar)
+#else
+#  define BLOCK_CHILD(nvar, ovar) ovar = (0)
+#  define UNBLOCK_CHILD(ovar) (0)
+#endif
 #endif /* !HAVE_POSIX_SIGNALS */
 
 /* Extern variables */

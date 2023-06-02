@@ -19,13 +19,15 @@
 */
 
 #include <config.h>
-
+#ifndef _WIN32
 #ifdef HAVE_LONG_LONG_INT
 
 #define LONG		long long
 #define UNSIGNED_LONG	unsigned long long
+#endif
+#endif
 #define fmtulong	fmtullong
 
 #include "fmtulong.c"
 
-#endif
+

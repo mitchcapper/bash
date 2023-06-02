@@ -47,6 +47,12 @@
 #  include "ansi_stdlib.h"
 #endif /* HAVE_STDLIB_H */
 
+#ifdef _WIN32
+#define HAVE_PSELECT
+#undef HAVE_SELECT
+#include <sys/select.h>
+#endif
+
 #include <signal.h>
 
 #include "posixselect.h"
@@ -77,6 +83,10 @@ extern int errno;
 /* What kind of non-blocking I/O do we have? */
 #if !defined (O_NDELAY) && defined (O_NONBLOCK)
 #  define O_NDELAY O_NONBLOCK	/* Posix style */
+#endif
+
+#ifdef _WIN32
+#undef O_NDELAY
 #endif
 
 #if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
@@ -132,8 +142,9 @@ win32_isatty (int fd)
   errno = ENOTTY;
   return 0;
 }
-
+#ifndef _WIN32
 #define isatty(x)	win32_isatty(x)
+#endif
 #endif
 
 /* Readline timeouts */
@@ -825,13 +836,17 @@ rl_getc (FILE *stream)
 #if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
       /* At this point, if we have pselect, we're using select/pselect for the
 	 timeouts. We handled MinGW above. */
+#ifndef _WIN32
       FD_ZERO (&readfds);
       FD_SET (fd, &readfds);
+#endif
 #  if defined (HANDLE_SIGNALS)
       result = _rl_timeout_select (fd + 1, &readfds, NULL, NULL, NULL, &_rl_orig_sigset);
 #  else
       sigemptyset (&empty_set);
+#ifndef _WIN32
       sigprocmask (SIG_BLOCK, (sigset_t *)NULL, &empty_set);
+#endif
       result = _rl_timeout_select (fd + 1, &readfds, NULL, NULL, NULL, &empty_set);
 #  endif /* HANDLE_SIGNALS */
       if (result == 0)

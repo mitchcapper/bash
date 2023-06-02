@@ -85,7 +85,9 @@ set_default_locale ()
 #else
   default_locale = savestring ("C");
 #endif /* HAVE_SETLOCALE */
+#ifndef _WIN32
   bindtextdomain (PACKAGE, LOCALEDIR);
+#endif
   textdomain (PACKAGE);
 
   locale_mb_cur_max = MB_CUR_MAX;

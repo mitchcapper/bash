@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with Bash.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifndef _WIN32
 #ifndef _POSIXTIME_H_
 #define _POSIXTIME_H_
 
@@ -48,9 +48,6 @@ struct timeval
 };
 #endif
 
-#if !HAVE_GETTIMEOFDAY
-extern int gettimeofday PARAMS((struct timeval *, void *));
-#endif
 
 /* These exist on BSD systems, at least. */
 #if !defined (timerclear)
@@ -82,3 +79,4 @@ extern int gettimeofday PARAMS((struct timeval *, void *));
 #endif
 
 #endif /* _POSIXTIME_H_ */
+#endif

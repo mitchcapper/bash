@@ -522,12 +522,12 @@ line_isblank (line)
 #endif /* O_NDELAY */
 
 /* Make sure no-delay mode is not set on file descriptor FD. */
-int
+static int
 sh_unset_nodelay_mode (fd)
      int fd;
 {
   int flags, bflags;
-
+#ifndef _WIN32
   if ((flags = fcntl (fd, F_GETFL, 0)) < 0)
     return -1;
 
@@ -550,6 +550,9 @@ sh_unset_nodelay_mode (fd)
     }
 
   return 0;
+#else
+  return -1;
+#endif
 }
 
 /* Just a wrapper for the define in include/filecntl.h */
@@ -596,7 +599,11 @@ check_dev_tty ()
 
   if (tty_fd < 0)
     {
+#ifndef _WIN32
       tty = (char *)ttyname (fileno (stdin));
+#else
+      tty = NULL;
+#endif
       if (tty == 0)
 	return;
       tty_fd = open (tty, O_RDWR|O_NONBLOCK);

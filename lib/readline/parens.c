@@ -39,7 +39,9 @@
 #endif
 
 #include "posixselect.h"
-
+#ifdef _WIN32
+#include <sys/select.h>
+#endif
 #if defined (HAVE_STRING_H)
 #  include <string.h>
 #else /* !HAVE_STRING_H */

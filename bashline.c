@@ -4804,11 +4804,15 @@ bash_event_hook ()
     sig = terminating_signal;
   else if (interrupt_state)
     sig = SIGINT;
-  else if (read_timeout && read_timeout->alrmflag)
+  else if (read_timeout && read_timeout->alrmflag){
+#ifndef _WIN32
     sig = SIGALRM;
-  else if (RL_ISSTATE (RL_STATE_TIMEOUT))		/* just in case */
+#endif
+  }else if (RL_ISSTATE (RL_STATE_TIMEOUT))		/* just in case */
     {
+#ifndef _WIN32
       sig = SIGALRM;
+#endif
       if (read_timeout)
 	read_timeout->alrmflag = 1;
     }

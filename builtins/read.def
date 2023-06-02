@@ -507,7 +507,11 @@ read_builtin (list)
 
 	  run_unwind_frame ("read_builtin");
 	  input_string = t;
+#ifndef _WIN32
 	  retval = 128+SIGALRM;
+#else
+    retval = 128;
+#endif
 	  goto assign_vars;
 	}
       if (interactive_shell == 0)
@@ -1198,7 +1202,9 @@ edit_line (p, itext)
     {
       if (RL_ISSTATE (RL_STATE_TIMEOUT))
 	{
+#ifndef _WIN32
 	  sigalrm (SIGALRM);		/* simulate receiving SIGALRM */
+#endif
 	  check_read_timeout ();
 	}
       return ret;

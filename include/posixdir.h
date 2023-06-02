@@ -23,7 +23,7 @@
 #if !defined (_POSIXDIR_H_)
 #define _POSIXDIR_H_
 
-#if defined (HAVE_DIRENT_H)
+#if defined (HAVE_DIRENT_H) || defined(_WIN32)
 #  include <dirent.h>
 #  if defined (HAVE_STRUCT_DIRENT_D_NAMLEN)
 #    define D_NAMLEN(d)	((d)->d_namlen)

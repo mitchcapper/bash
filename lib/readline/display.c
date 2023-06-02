@@ -44,7 +44,12 @@
 #ifdef __MSDOS__
 #  include <pc.h>
 #endif
-
+//va_dcl macro not on windows
+#ifdef PREFER_STDARG
+#ifdef PREFER_VARARGS
+#undef PREFER_VARARGS
+#endif
+#endif
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
 #include "rlmbutil.h"
@@ -2965,8 +2970,10 @@ rl_message (va_alist)
 #endif
 {
   va_list args;
+#ifndef _WIN32
 #if defined (PREFER_VARARGS)
   char *format;
+#endif
 #endif
 #if defined (HAVE_VSNPRINTF)
   int bneed;

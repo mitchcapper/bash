@@ -64,6 +64,13 @@ extern int errno;
 #include "rlprivate.h"
 #include "rlshell.h"
 #include "xmalloc.h"
+//va_dcl macro not on windows
+#ifdef PREFER_STDARG
+#ifdef PREFER_VARARGS
+#undef PREFER_VARARGS
+#endif
+#endif
+
 
 #if !defined (strchr) && !defined (__STDC__)
 extern char *strchr (), *strrchr ();

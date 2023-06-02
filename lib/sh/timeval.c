@@ -19,7 +19,10 @@
 */
 
 #include <config.h>
-
+#ifdef _WIN32
+#define HAVE_TIMEVAL
+#include <sys/time.h>
+#endif
 #if defined (HAVE_TIMEVAL)
 
 #include <sys/types.h>

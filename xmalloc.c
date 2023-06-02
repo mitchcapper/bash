@@ -38,7 +38,9 @@
 #include "error.h"
 
 #include "bashintl.h"
-
+#ifdef _WIN32
+#undef USING_BASH_MALLOC
+#endif
 #if !defined (PTR_T)
 #  if defined (__STDC__)
 #    define PTR_T void *

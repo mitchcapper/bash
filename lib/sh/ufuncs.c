@@ -32,7 +32,7 @@
 #if !defined (errno)
 extern int errno;
 #endif /* !errno */
-
+#include "osfixes.h"
 #if defined (HAVE_SELECT)
 #  include "posixselect.h"
 #  include "quit.h"

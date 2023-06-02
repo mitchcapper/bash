@@ -29,9 +29,13 @@
 #endif
 
 #define FD_NCLOEXEC    0
-
+#ifndef _WIN32
 #define SET_CLOSE_ON_EXEC(fd)  (fcntl ((fd), F_SETFD, FD_CLOEXEC))
 #define SET_OPEN_ON_EXEC(fd)   (fcntl ((fd), F_SETFD, FD_NCLOEXEC))
+#else
+#define SET_CLOSE_ON_EXEC(fd)  (-1)
+#define SET_OPEN_ON_EXEC(fd)    (-1)
+#endif
 
 /* How to open a file in non-blocking mode, the Posix.1 way. */
 #if !defined (O_NONBLOCK)

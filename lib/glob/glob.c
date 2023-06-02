@@ -33,7 +33,10 @@
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
-
+#ifdef _WIN32
+#include <dirent.h>
+#include <alloca.h>
+#endif
 #include "bashansi.h"
 #include "posixdir.h"
 #include "posixstat.h"

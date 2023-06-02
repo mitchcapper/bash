@@ -2305,11 +2305,16 @@ rl_username_completion_function (const char *text, int state)
     }
   else
     {
+      #ifndef _WIN32
       value = (char *)xmalloc (2 + strlen (entry->pw_name));
 
       *value = *text;
 
       strcpy (value + first_char_loc, entry->pw_name);
+      #else
+        value = (char *)xmalloc (15);
+        strcpy(value,"NOUSER");
+      #endif
 
       if (first_char == '~')
 	rl_filename_completion_desired = 1;

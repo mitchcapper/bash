@@ -65,7 +65,10 @@ main (argc, argv)
 
   for (i = 0; i < 128; i++)
     buf[i] = ' ';
-
+#ifdef _WIN32
+  nw=4096;
+  sigpipe(3);
+#endif
   signal (SIGPIPE, sigpipe);
 
   nw = 0;

@@ -199,8 +199,10 @@ make_buffered_stream (fd, buffer, bufsize)
   bp->b_used = bp->b_inputp = bp->b_flag = 0;
   if (bufsize == 1)
     bp->b_flag |= B_UNBUFF;
+#ifndef _WIN32
   if (O_TEXT && (fcntl (fd, F_GETFL) & O_TEXT) != 0)
     bp->b_flag |= B_TEXT;
+#endif
   return (bp);
 }
 

@@ -26,7 +26,9 @@
 #include "bashansi.h"
 #include "chartypes.h"
 #include <errno.h>
-
+#ifdef _WIN32
+#define HAVE_UNISTD_H
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -377,7 +379,7 @@ main(argc, argv)
 }
 
 
-#if !defined (HAVE_STRERROR)
+#if !defined (HAVE_STRERROR) && ! defined (_WIN32)
 
 #include <bashtypes.h>
 #if defined (HAVE_SYS_PARAM_H)

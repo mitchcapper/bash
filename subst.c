@@ -42,7 +42,7 @@
 #include "bashansi.h"
 #include "posixstat.h"
 #include "bashintl.h"
-
+#include "osfixes.h"
 #include "shell.h"
 #include "parser.h"
 #include "redir.h"

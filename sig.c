@@ -31,7 +31,9 @@
 
 #include <stdio.h>
 #include <signal.h>
-
+// #ifdef _WIN32
+// #define SigHandler sighandler_t
+// #endif
 #include "bashintl.h"
 
 #include "shell.h"
@@ -42,7 +44,7 @@
 #include "siglist.h"
 #include "sig.h"
 #include "trap.h"
-
+#include "osfixes.h"
 #include "builtins/common.h"
 #include "builtins/builtext.h"
 
@@ -550,7 +552,12 @@ termsig_sighandler (sig)
 #if defined (HISTORY)
       /* XXX - will inhibit history file being written */
 #  if defined (READLINE)
-      if (interactive_shell == 0 || interactive == 0 || (sig != SIGHUP && sig != SIGTERM) || no_line_editing || (RL_ISSTATE (RL_STATE_READCMD) == 0))
+      if (interactive_shell == 0 || interactive == 0 ||
+      (
+#ifndef _WIN32
+        sig != SIGHUP &&
+#endif
+      sig != SIGTERM) || no_line_editing || (RL_ISSTATE (RL_STATE_READCMD) == 0))
 #  endif
         history_lines_this_session = 0;
 #endif
@@ -593,7 +600,11 @@ termsig_handler (sig)
      an interactive shell is running in a terminal window that gets closed
      with the `close' button.  We can't test for RL_STATE_READCMD because
      readline no longer handles SIGTERM synchronously.  */
-  if (interactive_shell && interactive && (sig == SIGHUP || sig == SIGTERM) && remember_on_history)
+  if (interactive_shell && interactive && (
+#ifndef _WIN32
+    sig == SIGHUP ||
+#endif
+    sig == SIGTERM) && remember_on_history)
     maybe_save_shell_history ();
 #endif /* HISTORY */
 
@@ -756,12 +767,13 @@ sigterm_sighandler (sig)
 }
 
 /* Signal functions used by the rest of the code. */
-#if !defined (HAVE_POSIX_SIGNALS)
+#if !defined (HAVE_POSIX_SIGNALS) && ! defined(_WIN32)
 
 /* Perform OPERATION on NEWSET, perhaps leaving information in OLDSET. */
 sigprocmask (operation, newset, oldset)
      int operation, *newset, *oldset;
 {
+#ifndef _WIN32
   int old, new;
 
   if (newset)
@@ -785,6 +797,7 @@ sigprocmask (operation, newset, oldset)
 
   if (oldset)
     *oldset = old;
+#endif
 }
 
 #else
@@ -797,11 +810,16 @@ sigprocmask (operation, newset, oldset)
 #  define SA_RESTART 0
 #endif
 
+
+#ifndef _WIN32
 SigHandler *
 set_signal_handler (sig, handler)
      int sig;
      SigHandler *handler;
 {
+#else
+void* somefunc(int sig, void *handler) {
+#endif
   struct sigaction act, oact;
 
   act.sa_handler = handler;

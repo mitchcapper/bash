@@ -27,7 +27,8 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
+#include "osfixes.h"
+//commenting out for now termios if the last thing prolly emulatable there are older versions doing so
 #include <shtty.h>
 
 static TTYSTRUCT ttin, ttout;
@@ -44,7 +45,10 @@ TTYSTRUCT *ttp;
 #  ifdef TERMIO_TTY_DRIVER
   return ioctl(fd, TCGETA, ttp);
 #  else
+#ifndef _WIN32
   return ioctl(fd, TIOCGETP, ttp);
+#endif  
+  return 0;
 #  endif
 #endif
 }
@@ -60,7 +64,10 @@ TTYSTRUCT *ttp;
 #  ifdef TERMIO_TTY_DRIVER
   return ioctl(fd, TCSETAW, ttp);
 #  else
+#ifndef _WIN32
   return ioctl(fd, TIOCSETN, ttp);
+#endif  
+  return 0;
 #  endif
 #endif
 }

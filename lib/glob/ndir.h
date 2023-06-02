@@ -1,6 +1,6 @@
 /* <dir.h> -- definitions for 4.2BSD-compatible directory access.
    last edit:	09-Jul-1983	D A Gwyn. */
-
+#ifndef _WIN32
 #if defined (VMS)
 #  if !defined (FAB$C_BID)
 #    include <fab.h>
@@ -48,3 +48,5 @@ extern long telldir ();
 extern void seekdir (), closedir ();
 
 #define rewinddir(dirp) seekdir (dirp, 0L)
+
+#endif
