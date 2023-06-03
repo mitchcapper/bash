@@ -24,7 +24,9 @@
 #if defined (HAVE_CONFIG_H)
 #  include <config.h>
 #endif
-
+#ifdef _WIN32
+#define __MINGW32__
+#endif
 #include <sys/types.h>
 #include "posixstat.h"
 #include <fcntl.h>
@@ -47,12 +49,12 @@
 #endif
 
 #include <stdio.h>
-
+#include "osfixes.h"
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
 
 #ifdef __MSDOS__
-#  include <pc.h>
+//#  include <pc.h>
 #endif
 
 #include "rltty.h"

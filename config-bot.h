@@ -205,3 +205,12 @@
 
 /* If you don't want bash to provide a default mail file to check. */
 /* #undef DEFAULT_MAIL_DIRECTORY */
+
+#ifdef _WIN32
+//with newer windows sdks the wrong header order in some files results in a SocketNotificationRetrieveEvents defined multiple times error, this is the easiest solution ive seen
+#ifndef WINSOCK_INCLUDED
+#define WINSOCK_INCLUDED 1
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+#endif
+#endif

@@ -19,6 +19,10 @@
 */
 
 %{
+//override the MS defines of these, word is typedefed but undefing a typedef doesnt work well so changed here
+#define IN
+#define WORD USHORT
+
 #include "config.h"
 
 #include "bashtypes.h"
@@ -335,6 +339,9 @@ static REDIRECTEE redir;
 
 static FILE *yyoutstream;
 static FILE *yyerrstream;
+//now safe to undef them for our use
+#undef IN
+#undef WORD
 %}
 
 %union {

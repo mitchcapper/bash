@@ -53,7 +53,7 @@
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
 #include "rlmbutil.h"
-
+#include "osfixes.h"
 /* Termcap library stuff. */
 #include "tcap.h"
 

@@ -329,8 +329,9 @@ initialize_shell_signals ()
 #endif /* JOB_CONTROL || HAVE_POSIX_SIGNALS */
 
   /* And, some signals that are specifically ignored by the shell. */
+#ifndef _WIN32
   set_signal_handler (SIGQUIT, SIG_IGN);
-
+#endif
   if (interactive)
     {
       set_signal_handler (SIGINT, sigint_sighandler);
