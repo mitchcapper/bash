@@ -23,7 +23,7 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 topdir = @top_srcdir@
 BUILD_DIR = @BUILD_DIR@
-
+OBJEXT = @OBJEXT@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -40,7 +40,7 @@ SHELL = @MAKE_SHELL@
 
 PROFILE_FLAGS = @PROFILE_FLAGS@
 
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ -DHAVE_UNISTD_H
 LOCAL_CFLAGS = @LOCAL_CFLAGS@
 STYLE_CFLAGS = @STYLE_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
@@ -51,16 +51,16 @@ LOCAL_DEFS = @LOCAL_DEFS@
 
 BASHINCDIR = ${topdir}/include
 
-INCLUDES = -I. -I../.. -I$(topdir) -I$(BASHINCDIR) -I$(topdir)/lib
+INCLUDES = -I. -I../.. -I$(topdir) -I$(topdir)/gnu -I$(BASHINCDIR) -I$(topdir)/lib
 
 CCFLAGS = $(PROFILE_FLAGS) $(DEFS) $(LOCAL_DEFS) ${INCLUDES} $(CPPFLAGS) \
 	  $(STYLE_CFLAGS) $(LOCAL_CFLAGS) $(CFLAGS) ${ADDON_CFLAGS}
 
-# Here is a rule for making .o files from .c files that doesn't force
+# Here is a rule for making .$(OBJEXT) files from .c files that doesn't force
 # the type of the machine (like -sun3) into the flags.
-.c.o:
-	$(RM) $@
-	$(CC) -c $(CCFLAGS) $<
+%.obj: %.c
+	${RM} $@
+	$(CC) $(CCFLAGS) -c $<
 
 # The name of the library target.
 LIBRARY_NAME = libglob.a
@@ -72,7 +72,7 @@ CSOURCES = $(srcdir)/glob.c $(srcdir)/strmatch.c $(srcdir)/smatch.c \
 # The header files for this library.
 HSOURCES = $(srcdir)/strmatch.h
 
-OBJECTS = glob.o strmatch.o smatch.o xmbsrtowcs.o gmisc.o
+OBJECTS = glob.$(OBJEXT) strmatch.$(OBJEXT) smatch.$(OBJEXT) xmbsrtowcs.$(OBJEXT) gmisc.$(OBJEXT)
 
 # The texinfo files which document this library.
 DOCSOURCE = doc/glob.texi
@@ -129,41 +129,41 @@ ${BUILD_DIR}/pathnames.h: ${BUILD_DIR}/config.h ${BUILD_DIR}/Makefile Makefile
 #								     #
 ######################################################################
 
-smatch.o: strmatch.h
-smatch.o: $(BUILD_DIR)/config.h
-smatch.o: $(BASHINCDIR)/chartypes.h
-smatch.o: $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
-smatch.o: $(BASHINCDIR)/shmbutil.h
-smatch.o: $(topdir)/xmalloc.h
+smatch.$(OBJEXT): strmatch.h
+smatch.$(OBJEXT): $(BUILD_DIR)/config.h
+smatch.$(OBJEXT): $(BASHINCDIR)/chartypes.h
+smatch.$(OBJEXT): $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
+smatch.$(OBJEXT): $(BASHINCDIR)/shmbutil.h
+smatch.$(OBJEXT): $(topdir)/xmalloc.h
 
-strmatch.o: strmatch.h
-strmatch.o: $(BUILD_DIR)/config.h
-strmatch.o: $(BASHINCDIR)/stdc.h
+strmatch.$(OBJEXT): strmatch.h
+strmatch.$(OBJEXT): $(BUILD_DIR)/config.h
+strmatch.$(OBJEXT): $(BASHINCDIR)/stdc.h
 
-glob.o: $(BUILD_DIR)/config.h
-glob.o: $(topdir)/shell.h $(BUILD_DIR)/pathnames.h
-glob.o: $(topdir)/bashtypes.h $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
-glob.o: $(BASHINCDIR)/posixstat.h $(BASHINCDIR)/memalloc.h
-glob.o: strmatch.h glob.h
-glob.o: $(BASHINCDIR)/shmbutil.h
-glob.o: $(topdir)/xmalloc.h
+glob.$(OBJEXT): $(BUILD_DIR)/config.h
+glob.$(OBJEXT): $(topdir)/shell.h $(BUILD_DIR)/pathnames.h
+glob.$(OBJEXT): $(topdir)/bashtypes.h $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
+glob.$(OBJEXT): $(BASHINCDIR)/posixstat.h $(BASHINCDIR)/memalloc.h
+glob.$(OBJEXT): strmatch.h glob.h
+glob.$(OBJEXT): $(BASHINCDIR)/shmbutil.h
+glob.$(OBJEXT): $(topdir)/xmalloc.h
 
-gmisc.o: $(BUILD_DIR)/config.h
-gmisc.o: $(topdir)/bashtypes.h $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
-gmisc.o: $(BASHINCDIR)/shmbutil.h
+gmisc.$(OBJEXT): $(BUILD_DIR)/config.h
+gmisc.$(OBJEXT): $(topdir)/bashtypes.h $(BASHINCDIR)/ansi_stdlib.h $(topdir)/bashansi.h
+gmisc.$(OBJEXT): $(BASHINCDIR)/shmbutil.h
 
-xmbsrtowcs.o: ${BUILD_DIR}/config.h
-xmbsrtowcs.o: ${topdir}/bashansi.h ${BASHINCDIR}/ansi_stdlib.h
-xmbsrtowcs.o: ${BASHINCDIR}/shmbutil.h
+xmbsrtowcs.$(OBJEXT): ${BUILD_DIR}/config.h
+xmbsrtowcs.$(OBJEXT): ${topdir}/bashansi.h ${BASHINCDIR}/ansi_stdlib.h
+xmbsrtowcs.$(OBJEXT): ${BASHINCDIR}/shmbutil.h
 
 # Rules for deficient makes, like SunOS and Solaris
-glob.o: glob.c
-gmisc.o: gmisc.c
-strmatch.o: strmatch.c
-smatch.o: smatch.c
-xmbsrtowcs.o: xmbsrtowcs.c
+glob.$(OBJEXT): glob.c
+gmisc.$(OBJEXT): gmisc.c
+strmatch.$(OBJEXT): strmatch.c
+smatch.$(OBJEXT): smatch.c
+xmbsrtowcs.$(OBJEXT): xmbsrtowcs.c
 
 # dependencies for C files that include other C files
-glob.o: glob_loop.c
-gmisc.o: gm_loop.c
-smatch.o: sm_loop.c
+glob.$(OBJEXT): glob_loop.c
+gmisc.$(OBJEXT): gm_loop.c
+smatch.$(OBJEXT): sm_loop.c

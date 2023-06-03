@@ -33,9 +33,24 @@ AC_PREREQ(2.69)
 
 AC_CONFIG_SRCDIR(shell.h)
 dnl where to find install.sh, config.sub, and config.guess
-AC_CONFIG_AUX_DIR(./support)
-AC_CONFIG_HEADERS(config.h)
+#AC_CONFIG_AUX_DIR(./support)
+AC_CONFIG_AUX_DIR([build-aux])
 
+
+AM_INIT_AUTOMAKE([subdir-objects foreign])
+#aclocal_DATA = acinclude.m4
+AC_CONFIG_HEADERS([config.h])
+AH_TOP([#include "config-top.h"])
+AH_BOTTOM([#include "config-bot.h"])
+#AC_CONFIG_HEADERS([lib/config.h:lib/config.hin])
+
+AM_SILENT_RULES([yes])
+AC_PROG_CC
+
+gl_EARLY
+
+
+#AC_CONFIG_MACRO_DIR([m4])
 dnl checks for version info
 BASHVERS=bashvers
 RELSTATUS=relstatus
@@ -56,6 +71,9 @@ opt_bash_malloc=yes
 opt_afs=no
 opt_curses=no
 opt_with_installed_readline=no
+
+AC_CONFIG_LIBOBJ_DIR([lib/sh])
+AC_CONFIG_LIBOBJ_DIR([gnu])
 
 #htmldir=
 
@@ -123,7 +141,7 @@ if test "$opt_bash_malloc" = yes; then
 	MALLOC_LDFLAGS='-L$(ALLOC_LIBDIR)'
 	MALLOC_DEP='$(MALLOC_LIBRARY)'
 
-	AC_DEFINE(USING_BASH_MALLOC)
+	AC_DEFINE([USING_BASH_MALLOC], [ 1 ], [ ])
 else
 	MALLOC_LIB=
 	MALLOC_LIBRARY=
@@ -132,7 +150,7 @@ else
 fi
 
 if test "$opt_afs" = yes; then
-	AC_DEFINE(AFS)
+	AC_DEFINE([AFS], [ 1 ], [ ])
 fi
 
 if test "$opt_curses" = yes; then
@@ -186,7 +204,7 @@ opt_alt_array_impl=no
 opt_translatable_strings=yes
 
 dnl modified by alternate array implementation option
-ARRAY_O=array.o
+ARRAY_O_SOURCES=array.c
 
 dnl options that affect how bash is compiled and linked
 opt_static_link=no
@@ -267,111 +285,118 @@ dnl opt_job_control is handled later, after BASH_JOB_CONTROL_MISSING runs
 dnl opt_readline and opt_history are handled later, because AC_PROG_CC needs
 dnl to be run before we can check the version of an already-installed readline
 dnl library
+#gnulib assumes HANDLE_MULTIBYTE always true now per changelog
+AC_DEFINE( [HANDLE_MULTIBYTE], [ 1 ] , [ ])
+
+AC_DEFINE_UNQUOTED( [CONF_HOSTTYPE], [ "$host_cpu" ] , [ ] )
+AC_DEFINE_UNQUOTED( [CONF_OSTYPE], [ "$host_os" ] , [ ] )
+AC_DEFINE_UNQUOTED( [CONF_MACHTYPE], [ "$host" ] , [ ] )
+AC_DEFINE_UNQUOTED( [CONF_VENDOR], [ "$host_vendor" ] , [ ] )
 
 if test $opt_alias = yes; then
-AC_DEFINE(ALIAS)
+AC_DEFINE([ALIAS], [ 1 ], [ ])
 fi
 if test $opt_dirstack = yes; then
-AC_DEFINE(PUSHD_AND_POPD)
+AC_DEFINE([PUSHD_AND_POPD], [ 1 ], [ ])
 fi
 if test $opt_restricted = yes; then
-AC_DEFINE(RESTRICTED_SHELL)
+AC_DEFINE([RESTRICTED_SHELL], [ 1 ], [ ])
 fi
 if test $opt_process_subst = yes; then
-AC_DEFINE(PROCESS_SUBSTITUTION)
+AC_DEFINE([PROCESS_SUBSTITUTION], [ 1 ], [ ])
 fi
 if test $opt_prompt_decoding = yes; then
-AC_DEFINE(PROMPT_STRING_DECODE)
+AC_DEFINE([PROMPT_STRING_DECODE], [ 1 ], [ ])
 fi
 if test $opt_select = yes; then
-AC_DEFINE(SELECT_COMMAND)
+AC_DEFINE([SELECT_COMMAND], [ 1 ], [ ])
 fi
 if test $opt_help = yes; then
-AC_DEFINE(HELP_BUILTIN)
+AC_DEFINE([HELP_BUILTIN], [ 1 ], [ ])
 fi
 if test $opt_array_variables = yes; then
-AC_DEFINE(ARRAY_VARS)
+AC_DEFINE([ARRAY_VARS], [ 1 ], [ ])
 fi
 if test $opt_dparen_arith = yes; then
-AC_DEFINE(DPAREN_ARITHMETIC)
+AC_DEFINE([DPAREN_ARITHMETIC], [ 1 ], [ ])
 fi
 if test $opt_brace_expansion = yes; then
-AC_DEFINE(BRACE_EXPANSION)
+AC_DEFINE([BRACE_EXPANSION], [ 1 ], [ ])
 fi
 if test $opt_disabled_builtins = yes; then
-AC_DEFINE(DISABLED_BUILTINS)
+AC_DEFINE([DISABLED_BUILTINS], [ 1 ], [ ])
 fi
 if test $opt_command_timing = yes; then
-AC_DEFINE(COMMAND_TIMING)
+AC_DEFINE([COMMAND_TIMING], [ 1 ], [ ])
 fi
 if test $opt_xpg_echo = yes ; then
-AC_DEFINE(DEFAULT_ECHO_TO_XPG)
+AC_DEFINE([DEFAULT_ECHO_TO_XPG], [ 1 ], [ ])
 fi
 if test $opt_strict_posix = yes; then
-AC_DEFINE(STRICT_POSIX)
+AC_DEFINE([STRICT_POSIX], [ 1 ], [ ])
 fi
 if test $opt_extended_glob = yes ; then
-AC_DEFINE(EXTENDED_GLOB)
+AC_DEFINE([EXTENDED_GLOB], [ 1 ], [ ])
 fi
 if test $opt_extglob_default = yes; then
-AC_DEFINE(EXTGLOB_DEFAULT, 1)
+AC_DEFINE([EXTGLOB_DEFAULT], 1, [ ])
 else
-AC_DEFINE(EXTGLOB_DEFAULT, 0)
+AC_DEFINE([EXTGLOB_DEFAULT], 0, [ ])
 fi
 if test $opt_cond_command = yes ; then
-AC_DEFINE(COND_COMMAND)
+AC_DEFINE([COND_COMMAND], [ 1 ], [ ])
 fi
 if test $opt_cond_regexp = yes ; then
-AC_DEFINE(COND_REGEXP)
+AC_DEFINE([COND_REGEXP], [ 1 ], [ ])
 fi
 if test $opt_coproc = yes; then
-AC_DEFINE(COPROCESS_SUPPORT)
+AC_DEFINE([COPROCESS_SUPPORT], [ 1 ], [ ])
 fi
 if test $opt_arith_for_command = yes; then
-AC_DEFINE(ARITH_FOR_COMMAND)
+AC_DEFINE([ARITH_FOR_COMMAND], [ 1 ], [ ])
 fi
 if test $opt_net_redirs = yes; then
-AC_DEFINE(NETWORK_REDIRECTIONS)
+AC_DEFINE([NETWORK_REDIRECTIONS], [ 1 ], [ ])
 fi
 if test $opt_progcomp = yes; then
-AC_DEFINE(PROGRAMMABLE_COMPLETION)
+AC_DEFINE([PROGRAMMABLE_COMPLETION], [ 1 ], [ ])
 fi
 if test $opt_multibyte = no; then
-AC_DEFINE(NO_MULTIBYTE_SUPPORT)
+AC_DEFINE([NO_MULTIBYTE_SUPPORT], [ 1 ], [ ])
 fi
 if test $opt_debugger = yes; then
-AC_DEFINE(DEBUGGER)
+AC_DEFINE([DEBUGGER], [ 1 ], [ ])
 fi
 if test $opt_casemod_attrs = yes; then
-AC_DEFINE(CASEMOD_ATTRS)
+AC_DEFINE([CASEMOD_ATTRS], [ 1 ], [ ])
 fi
 if test $opt_casemod_expansions = yes; then
-AC_DEFINE(CASEMOD_EXPANSIONS)
+AC_DEFINE([CASEMOD_EXPANSIONS], [ 1 ], [ ])
 fi
 if test $opt_dircomplete_expand_default = yes; then
-AC_DEFINE(DIRCOMPLETE_EXPAND_DEFAULT)
+AC_DEFINE([DIRCOMPLETE_EXPAND_DEFAULT], [ 1 ], [ ])
 fi
 if test $opt_globascii_default = yes; then
-AC_DEFINE(GLOBASCII_DEFAULT, 1)
+AC_DEFINE([GLOBASCII_DEFAULT], 1, [ ])
 else
-AC_DEFINE(GLOBASCII_DEFAULT, 0)
+AC_DEFINE([GLOBASCII_DEFAULT], 0, [ ])
 fi
 if test $opt_function_import = yes; then
-AC_DEFINE(FUNCTION_IMPORT)
+AC_DEFINE([FUNCTION_IMPORT], [ 1 ], [ ])
 fi
 if test $opt_dev_fd_stat_broken = yes; then
-AC_DEFINE(DEV_FD_STAT_BROKEN)
+AC_DEFINE([DEV_FD_STAT_BROKEN], [ 1 ], [ ])
 fi
 if test $opt_alt_array_impl = yes; then
-AC_DEFINE(ALT_ARRAY_IMPLEMENTATION)
+AC_DEFINE([ALT_ARRAY_IMPLEMENTATION], [ 1 ], [ ])
 ARRAY_O=array2.o
 fi
 if test $opt_translatable_strings = yes; then
-AC_DEFINE(TRANSLATABLE_STRINGS)
+AC_DEFINE([TRANSLATABLE_STRINGS], [ 1 ], [ ])
 fi
 
 if test $opt_memscramble = yes; then
-AC_DEFINE(MEMSCRAMBLE)
+AC_DEFINE([MEMSCRAMBLE], [ 1 ], [ ])
 fi
 
 if test "$opt_minimal_config" = yes; then
@@ -397,16 +422,16 @@ if test "$opt_single_longdoc_strings" != "yes"; then
 fi
 
 dnl now substitute in the values generated by arguments
-AC_SUBST(TESTSCRIPT)
-AC_SUBST(MALLOC_TARGET)
-AC_SUBST(MALLOC_SRC)
+# AC_SUBST(TESTSCRIPT)
+# AC_SUBST(MALLOC_TARGET)
+# AC_SUBST(MALLOC_SRC)
 
-AC_SUBST(MALLOC_LIB)
-AC_SUBST(MALLOC_LIBRARY)
-AC_SUBST(MALLOC_LDFLAGS)
-AC_SUBST(MALLOC_DEP)
+# AC_SUBST(MALLOC_LIB)
+# AC_SUBST(MALLOC_LIBRARY)
+# AC_SUBST(MALLOC_LDFLAGS)
+# AC_SUBST(MALLOC_DEP)
 
-AC_SUBST(ARRAY_O)
+# AC_SUBST(ARRAY_O)
 
 AC_SUBST(htmldir)
 
@@ -428,7 +453,8 @@ echo ""
 dnl compilation checks
 dnl AC_PROG_CC sets $cross_compiling to `yes' if cross-compiling for a
 dnl different environment
-AC_PROG_CC
+
+gl_INIT
 
 if test -n "$want_auto_cflags"; then
 	AUTO_CFLAGS="-g ${GCC:+-O2}"
@@ -587,7 +613,7 @@ fi
 
 TILDE_LIB=-ltilde
 if test $opt_readline = yes; then
-	AC_DEFINE(READLINE)
+	AC_DEFINE([READLINE], [ 1 ], [ ])
 	if test "$opt_with_installed_readline" != "no" ; then
 		case "$opt_with_installed_readline" in
 		yes)	RL_INCLUDE= ;;
@@ -622,10 +648,10 @@ else
 fi
 if test $opt_history = yes || test $opt_bang_history = yes; then
 	if test $opt_history = yes; then
-		AC_DEFINE(HISTORY)
+		AC_DEFINE([HISTORY], [ 1 ], [ ])
 	fi
 	if test $opt_bang_history = yes; then
-		AC_DEFINE(BANG_HISTORY)
+		AC_DEFINE([BANG_HISTORY], [ 1 ], [ ])
 	fi
  	if test "$opt_with_installed_readline" != "no"; then
 		HIST_LIBDIR=$RL_LIBDIR
@@ -710,48 +736,48 @@ if test x$SIZE = x; then
 fi
 AC_SUBST(SIZE)
 
-m4_include([m4/stat-time.m4])
-m4_include([m4/timespec.m4])
+# m4_include([m4/stat-time.m4])
+# m4_include([m4/timespec.m4])
 
-m4_include([m4/strtoimax.m4])
+# m4_include([m4/strtoimax.m4])
 
-dnl include files for gettext
+# dnl include files for gettext
 
-m4_include([m4/codeset.m4])
-m4_include([m4/extern-inline.m4])
-m4_include([m4/fcntl-o.m4])
-m4_include([m4/gettext.m4])
-m4_include([m4/glibc2.m4])
-m4_include([m4/glibc21.m4])
-m4_include([m4/host-cpu-c-abi.m4])
-m4_include([m4/iconv.m4])
-m4_include([m4/intdiv0.m4])
-m4_include([m4/intl.m4])
-m4_include([m4/intlmacosx.m4])
-m4_include([m4/intl-thread-locale.m4])
-m4_include([m4/intmax.m4])
-m4_include([m4/inttypes-pri.m4])
-m4_include([m4/inttypes.m4])
-m4_include([m4/inttypes_h.m4])
-m4_include([m4/lcmessage.m4])
-m4_include([m4/lib-ld.m4])
-m4_include([m4/lib-link.m4])
-m4_include([m4/lib-prefix.m4])
-m4_include([m4/lock.m4])
-m4_include([m4/nls.m4])
-m4_include([m4/po.m4])
-m4_include([m4/printf-posix.m4])
-m4_include([m4/progtest.m4])
-m4_include([m4/pthread_rwlock_rdlock.m4])
-m4_include([m4/size_max.m4])
-m4_include([m4/stdint_h.m4])
-m4_include([m4/threadlib.m4])
-m4_include([m4/uintmax_t.m4])
-m4_include([m4/ulonglong.m4])
-m4_include([m4/visibility.m4])
-m4_include([m4/wchar_t.m4])
-m4_include([m4/wint_t.m4])
-m4_include([m4/xsize.m4])
+# m4_include([m4/codeset.m4])
+# m4_include([m4/extern-inline.m4])
+# m4_include([m4/fcntl-o.m4])
+# m4_include([m4/gettext.m4])
+# m4_include([m4/glibc2.m4])
+# m4_include([m4/glibc21.m4])
+# m4_include([m4/host-cpu-c-abi.m4])
+# m4_include([m4/iconv.m4])
+# m4_include([m4/intdiv0.m4])
+# m4_include([m4/intl.m4])
+# m4_include([m4/intlmacosx.m4])
+# m4_include([m4/intl-thread-locale.m4])
+# m4_include([m4/intmax.m4])
+# m4_include([m4/inttypes-pri.m4])
+# m4_include([m4/inttypes.m4])
+# m4_include([m4/inttypes_h.m4])
+# m4_include([m4/lcmessage.m4])
+# m4_include([m4/lib-ld.m4])
+# m4_include([m4/lib-link.m4])
+# m4_include([m4/lib-prefix.m4])
+# m4_include([m4/lock.m4])
+# m4_include([m4/nls.m4])
+# m4_include([m4/po.m4])
+# m4_include([m4/printf-posix.m4])
+# m4_include([m4/progtest.m4])
+# m4_include([m4/pthread_rwlock_rdlock.m4])
+# m4_include([m4/size_max.m4])
+# m4_include([m4/stdint_h.m4])
+# m4_include([m4/threadlib.m4])
+# m4_include([m4/uintmax_t.m4])
+# m4_include([m4/ulonglong.m4])
+# m4_include([m4/visibility.m4])
+# m4_include([m4/wchar_t.m4])
+# m4_include([m4/wint_t.m4])
+# m4_include([m4/xsize.m4])
 
 dnl C compiler characteristics
 AC_C_CONST
@@ -792,14 +818,14 @@ AC_CHECK_HEADER(sys/ptem.h, , ,[[
 
 dnl SunOS 4 needs to include <sys/time.h> before <sys/resource.h> to compile
 dnl autoconf complains about presence but inability to compile
-AC_CHECK_HEADER(sys/resource.h, AC_DEFINE(HAVE_SYS_RESOURCE_H), [], [[
+AC_CHECK_HEADER(sys/resource.h, AC_DEFINE([HAVE_SYS_RESOURCE_H], [ 1 ], [ ]), [], [[
 #if HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 ]])
 
 dnl special checks for libc functions
-AC_FUNC_ALLOCA
+#AC_FUNC_ALLOCA
 AC_FUNC_CHOWN
 AC_FUNC_GETPGRP
 AC_FUNC_VPRINTF
@@ -808,15 +834,15 @@ AC_FUNC_STRCOLL
 dnl if we're not using the bash malloc but require the C alloca, set things
 dnl up to build a libmalloc.a containing only alloca.o
 
-if test "$ac_cv_func_alloca_works" = "no" && test "$opt_bash_malloc" = "no"; then
-	MALLOC_TARGET=alloca
-	MALLOC_SRC=alloca.c
+# if test "$ac_cv_func_alloca_works" = "no" && test "$opt_bash_malloc" = "no"; then
+# 	MALLOC_TARGET=alloca
+# 	MALLOC_SRC=alloca.c
 
-	MALLOC_LIB='-lmalloc'
-	MALLOC_LIBRARY='$(ALLOC_LIBDIR)/libmalloc.a'
-	MALLOC_LDFLAGS='-L$(ALLOC_LIBDIR)'
-	MALLOC_DEP='$(MALLOC_LIBRARY)'
-fi
+# 	MALLOC_LIB='-lmalloc'
+# 	MALLOC_LIBRARY='$(ALLOC_LIBDIR)/libmalloc.a'
+# 	MALLOC_LDFLAGS='-L$(ALLOC_LIBDIR)'
+# 	MALLOC_DEP='$(MALLOC_LIBRARY)'
+# fi
 
 dnl if vprintf is not in libc, see if it's defined in stdio.h
 if test "$ac_cv_func_vprintf" = no; then
@@ -824,7 +850,7 @@ if test "$ac_cv_func_vprintf" = no; then
     AC_EGREP_HEADER([[int[ 	]*vprintf[^a-zA-Z0-9]]],stdio.h,ac_cv_func_vprintf=yes)
     AC_MSG_RESULT($ac_cv_func_vprintf)
     if test $ac_cv_func_vprintf = yes; then
-	AC_DEFINE(HAVE_VPRINTF)
+	AC_DEFINE([HAVE_VPRINTF], [ 1 ], [ ])
     fi
 fi
 
@@ -833,11 +859,11 @@ if test "$ac_cv_func_vprintf" = no && test "$ac_cv_func__doprnt" = "yes"; then
 fi
 
 dnl checks for certain version-specific system calls and libc functions
-AC_CHECK_FUNC(__setostype, AC_DEFINE(HAVE_SETOSTYPE))
-AC_CHECK_FUNC(wait3, AC_DEFINE(HAVE_WAIT3))
+AC_CHECK_FUNC(__setostype, AC_DEFINE([HAVE_SETOSTYPE], [ 1 ], [ ]))
+AC_CHECK_FUNC(wait3, AC_DEFINE([HAVE_WAIT3], [ 1 ], [ ]))
 
 dnl checks for missing libc functions
-AC_CHECK_FUNC(mkfifo, AC_DEFINE(HAVE_MKFIFO), AC_DEFINE(MKFIFO_MISSING))
+AC_CHECK_FUNC(mkfifo, AC_DEFINE([HAVE_MKFIFO], [ 1 ], [ ]), AC_DEFINE([MKFIFO_MISSING], [ 1 ], [ ]))
 
 dnl checks for system calls
 AC_CHECK_FUNCS(dup2 eaccess fcntl getdtablesize getentropy getgroups \
@@ -853,18 +879,18 @@ AC_CHECK_FUNCS(bcopy bzero confstr faccessat fnmatch \
 		setenv setlinebuf setlocale setvbuf siginterrupt strchr \
 		sysconf syslog tcgetattr times ttyname tzset unsetenv)
 
-AC_CHECK_FUNCS(vasprintf asprintf)
+#AC_CHECK_FUNCS(vasprintf asprintf)
 AC_CHECK_FUNCS(isascii isblank isgraph isprint isspace isxdigit)
 AC_CHECK_FUNCS(getpwent getpwnam getpwuid)
 AC_CHECK_FUNCS(mkstemp mkdtemp)
 AC_CHECK_FUNCS(arc4random)
 
-AC_REPLACE_FUNCS(getcwd memset)
-AC_REPLACE_FUNCS(strcasecmp strcasestr strerror strftime strnlen strpbrk strstr)
-AC_REPLACE_FUNCS(strtod strtol strtoul strtoll strtoull strtoumax)
-AC_REPLACE_FUNCS(dprintf)
-AC_REPLACE_FUNCS(strchrnul)
-AC_REPLACE_FUNCS(strdup)
+# AC_REPLACE_FUNCS(getcwd memset)
+# AC_REPLACE_FUNCS(strcasecmp strcasestr strerror strftime strnlen strpbrk strstr)
+# AC_REPLACE_FUNCS(strtod strtol strtoul strtoll strtoull strtoumax)
+# AC_REPLACE_FUNCS(dprintf)
+# AC_REPLACE_FUNCS(strchrnul)
+# AC_REPLACE_FUNCS(strdup)
 
 AC_CHECK_HEADERS(libaudit.h)
 AC_CHECK_DECLS([AUDIT_USER_TTY],,, [[#include <linux/audit.h>]])
@@ -892,7 +918,7 @@ AC_CHECK_DECLS([strtold], [
     )
     AC_MSG_RESULT($bash_cv_strtold_broken)
     if test "$bash_cv_strtold_broken" = "yes" ; then
-	AC_DEFINE(STRTOLD_BROKEN)
+	AC_DEFINE([STRTOLD_BROKEN], [ 1 ], [ ])
     fi
 ])
 
@@ -967,25 +993,25 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UINTPTR_T
 
-AC_CHECK_TYPE(ssize_t, int)
-AC_CHECK_TYPE(time_t, long)
+# AC_CHECK_TYPE(ssize_t, int)
+# AC_CHECK_TYPE(time_t, long)
 
 AC_TYPE_LONG_LONG_INT
 AC_TYPE_UNSIGNED_LONG_LONG_INT
 
-BASH_TYPE_SIG_ATOMIC_T
+# BASH_TYPE_SIG_ATOMIC_T
 
-AC_CHECK_SIZEOF(char, 1)
-AC_CHECK_SIZEOF(short, 2)
-AC_CHECK_SIZEOF(int, 4)
-AC_CHECK_SIZEOF(long, 4)
-AC_CHECK_SIZEOF(char *, 4)
-AC_CHECK_SIZEOF(size_t, 4)
-AC_CHECK_SIZEOF(double, 8)
-AC_CHECK_SIZEOF([long long], 8)
+# AC_CHECK_SIZEOF(char, 1)
+# AC_CHECK_SIZEOF(short, 2)
+# AC_CHECK_SIZEOF(int, 4)
+# AC_CHECK_SIZEOF(long, 4)
+# AC_CHECK_SIZEOF(char *, 4)
+# AC_CHECK_SIZEOF(size_t, 4)
+# AC_CHECK_SIZEOF(double, 8)
+# AC_CHECK_SIZEOF([long long], 8)
 
-AC_CHECK_TYPE(u_int, [unsigned int])
-AC_CHECK_TYPE(u_long, [unsigned long])
+#AC_CHECK_TYPE(u_int, [unsigned int])
+#AC_CHECK_TYPE(u_long, [unsigned long])
 
 BASH_TYPE_BITS16_T
 BASH_TYPE_U_BITS16_T
@@ -1001,7 +1027,7 @@ AC_HEADER_STAT
 dnl system services
 AC_SYS_INTERPRETER
 if test $ac_cv_sys_interpreter = yes; then
-AC_DEFINE(HAVE_HASH_BANG_EXEC)
+AC_DEFINE([HAVE_HASH_BANG_EXEC], [ 1 ], [ ])
 fi
 
 dnl Miscellaneous Bash tests
@@ -1020,19 +1046,19 @@ BASH_SYS_SIGLIST
 BASH_UNDER_SYS_SIGLIST
 
 dnl various system types
-BASH_CHECK_TYPE(clock_t, [#include <sys/times.h>], long)
-BASH_CHECK_TYPE(sigset_t, [#include <signal.h>], int)
-if test "$ac_cv_header_sys_socket_h" = "yes"; then
-BASH_CHECK_TYPE(socklen_t, [#include <sys/socket.h>], [unsigned int], HAVE_SOCKLEN_T)
-fi
+#BASH_CHECK_TYPE(clock_t, [#include <sys/times.h>], long)
+#BASH_CHECK_TYPE(sigset_t, [#include <signal.h>], int)
+#if test "$ac_cv_header_sys_socket_h" = "yes"; then
+#BASH_CHECK_TYPE(socklen_t, [#include <sys/socket.h>], [unsigned int], HAVE_SOCKLEN_T)
+#fi
 
-AC_CHECK_TYPE(quad_t, AC_DEFINE([HAVE_QUAD_T], [1]), [], )
-BASH_TYPE_RLIMIT
+#AC_CHECK_TYPE(quad_t, AC_DEFINE([[HAVE_QUAD_T]], [1], [ ]), [], )
+#BASH_TYPE_RLIMIT
 
-AC_TYPE_INTMAX_T
-AC_TYPE_UINTMAX_T
+#AC_TYPE_INTMAX_T
+#AC_TYPE_UINTMAX_T
 
-AC_CHECK_SIZEOF(intmax_t, 8)
+#AC_CHECK_SIZEOF(intmax_t, 8)
 
 dnl presence and contents of structures used by system calls
 BASH_STRUCT_TERMIOS_LDISC
@@ -1049,8 +1075,8 @@ BASH_STRUCT_TIMEZONE
 
 BASH_STRUCT_WEXITSTATUS_OFFSET
 
-BASH_CHECK_TYPE_STRUCT_TIMESPEC
-BASH_STAT_TIME
+#BASH_CHECK_TYPE_STRUCT_TIMESPEC
+#BASH_STAT_TIME
 
 dnl checks for system calls
 BASH_FUNC_SBRK
@@ -1061,9 +1087,9 @@ BASH_FUNC_OPENDIR_CHECK
 BASH_FUNC_ULIMIT_MAXFDS
 BASH_FUNC_FPURGE
 BASH_FUNC_GETENV
-if test "$ac_cv_func_getcwd" = "yes"; then
-BASH_FUNC_GETCWD
-fi
+#if test "$ac_cv_func_getcwd" = "yes"; then
+#BASH_FUNC_GETCWD
+#fi
 BASH_FUNC_POSIX_SETJMP
 BASH_FUNC_STRCOLL
 BASH_FUNC_SNPRINTF
@@ -1077,12 +1103,12 @@ dnl prototype and declaration in lib/sh/getenv.c will be standard-conformant
 if test "$ac_cv_func_putenv" = "yes"; then
 BASH_FUNC_STD_PUTENV
 else
-AC_DEFINE(HAVE_STD_PUTENV)
+AC_DEFINE([HAVE_STD_PUTENV], [ 1 ], [ ])
 fi
 if test "$ac_cv_func_unsetenv" = "yes"; then
 BASH_FUNC_STD_UNSETENV
 else
-AC_DEFINE(HAVE_STD_UNSETENV)
+AC_DEFINE([HAVE_STD_UNSETENV], [ 1 ], [ ])
 fi
 
 BASH_FUNC_PRINTF_A_FORMAT
@@ -1131,13 +1157,11 @@ if test "$bash_cv_job_control_missing" = missing; then
 fi
 
 if test "$opt_job_control" = yes; then
-AC_DEFINE(JOB_CONTROL)
-JOBS_O=jobs.o
-else
-JOBS_O=nojobs.o
+AC_DEFINE([JOB_CONTROL], [ 1 ], [ ])
 fi
 
-AC_SUBST(JOBS_O)
+AM_CONDITIONAL([USE_JOB_CONTROL], [test "$opt_job_control" = yes])
+
 
 dnl Defines that we want to propagate to the Makefiles in subdirectories,
 dnl like glob and readline
@@ -1150,10 +1174,10 @@ dnl
 dnl most of these are really old; this should really go away someday
 
 case "${host_os}" in
-sysv4.2*)	AC_DEFINE(SVR4_2)
-		AC_DEFINE(SVR4) ;;
-sysv4*)		AC_DEFINE(SVR4) ;;
-sysv5*)		AC_DEFINE(SVR5) ;;
+sysv4.2*)	AC_DEFINE([SVR4_2], [ 1 ], [ ])
+		AC_DEFINE([SVR4], [ 1 ], [ ]) ;;
+sysv4*)		AC_DEFINE([SVR4], [ 1 ], [ ]) ;;
+sysv5*)		AC_DEFINE([SVR5], [ 1 ], [ ]) ;;
 hpux9*)		LOCAL_CFLAGS="-DHPUX9 -DHPUX -DTGETENT_BROKEN -DTGETFLAG_BROKEN" ;;
 hpux*)		LOCAL_CFLAGS="-DHPUX -DTGETENT_BROKEN -DTGETFLAG_BROKEN" ;;
 dgux*)		LOCAL_CFLAGS=-D_DGUX_SOURCE; LOCAL_LIBS=-ldgc ;;
@@ -1173,7 +1197,7 @@ lynxos*)	LOCAL_CFLAGS=-DRECYCLES_PIDS ;;
 linux*)		LOCAL_LDFLAGS=-rdynamic		 # allow dynamic loading
 		case "`uname -r`" in
 		1.*|2.[[0123]]*)	: ;;
-		*)	AC_DEFINE(PGRP_PIPE) ;;
+		*)	AC_DEFINE([PGRP_PIPE], [ 1 ], [ ]) ;;
 		esac ;;
 netbsd*|openbsd*)	LOCAL_CFLAGS="-DDEV_FD_STAT_BROKEN" ;;
 freebsd*|midnightbsd*)	LOCAL_CFLAGS='-DHEREDOC_PIPESIZE=4096' ;;
@@ -1310,17 +1334,22 @@ AC_SUBST(LOCAL_DEFS)
 #AC_SUBST(ALLOCA_SOURCE)
 #AC_SUBST(ALLOCA_OBJECT)
 
-AC_CONFIG_FILES([Makefile builtins/Makefile lib/readline/Makefile \
-		 lib/glob/Makefile lib/intl/Makefile \
-		 lib/malloc/Makefile lib/sh/Makefile lib/termcap/Makefile \
-		 lib/tilde/Makefile doc/Makefile support/Makefile \
-		 po/Makefile.in examples/loadables/Makefile \
-		 examples/loadables/Makefile.inc \
-		 examples/loadables/Makefile.sample \
-		 examples/loadables/perl/Makefile \
-		 support/bash.pc support/bashbug.sh])
+#AC_CONFIG_FILES([m4/Makefile])
+#AC_CONFIG_FILES([lib/Makefile])
+AC_CONFIG_FILES([gnu/Makefile builtins/Makefile lib/readline/Makefile \
+		lib/glob/Makefile lib/intl/Makefile \
+		lib/malloc/Makefile lib/sh/Makefile lib/termcap/Makefile \
+		lib/tilde/Makefile doc/Makefile support/Makefile \
+		po/Makefile.in examples/loadables/Makefile \
+		examples/loadables/Makefile.inc \
+		examples/loadables/Makefile.sample \
+		examples/loadables/perl/Makefile \
+		support/bash.pc support/bashbug.sh Makefile])
+
+
+
 
 dnl Makefile uses this timestamp file to record whether config.h is up to date.
-AC_CONFIG_COMMANDS([stamp-h], [echo timestamp > stamp-h])
+#AC_CONFIG_COMMANDS([stamp-h], [echo timestamp > stamp-h])
 
 AC_OUTPUT

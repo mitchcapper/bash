@@ -26,7 +26,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_VERSION = @PACKAGE_VERSION@
-
+OBJEXT = @OBJEXT@
 srcdir = @srcdir@
 VPATH = @srcdir@
 topdir = @top_srcdir@
@@ -54,7 +54,7 @@ CTAGS = ctags -tw
 
 DEBUG = @DEBUG@
 
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ -DHAVE_CONFIG_H -DNO_TTY_DRIVER -DHAVE_DIRENT_H -DHAVE_POSIX_SIGNALS -DHAVE_SYS_TIME_H -DHAVE_TIMEVAL -DHAVE_GETTIMEOFDAY -DHAVE_UNISTD_H
 LOCAL_CFLAGS = @LOCAL_CFLAGS@ ${DEBUG}
 STYLE_CFLAGS = @STYLE_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
@@ -63,14 +63,14 @@ LDFLAGS = @LDFLAGS@
 DEFS = @DEFS@
 LOCAL_DEFS = @LOCAL_DEFS@
 
-INCLUDES = -I. -I$(BUILD_DIR) -I$(topdir) -I$(topdir)/lib
+INCLUDES = -I. -I$(BUILD_DIR) -I$(topdir) -I$(topdir)/gnu -I$(topdir)/lib -I$(topdir)/include
 
 CCFLAGS = $(DEFS) $(LOCAL_DEFS) $(APP_CFLAGS) $(CPPFLAGS) ${INCLUDES} \
 	  $(STYLE_CFLAGS) $(LOCAL_CFLAGS) $(CFLAGS) ${ADDON_CFLAGS}
 
-.c.o:
+%.obj: %.c
 	${RM} $@
-	$(CC) -c $(CCFLAGS) $<
+	$(CC) $(CCFLAGS) -c $<
 
 # The name of the main library target.
 LIBRARY_NAME = libreadline.a
@@ -96,15 +96,15 @@ HSOURCES = readline.h rldefs.h chardefs.h keymaps.h history.h histlib.h \
 	   ansi_stdlib.h rlstdc.h tcap.h xmalloc.h rlprivate.h rlshell.h \
 	   rltypedefs.h rlmbutil.h colors.h parse-colors.h
 
-HISTOBJ = history.o histexpand.o histfile.o histsearch.o shell.o savestring.o \
-	  mbutil.o
-TILDEOBJ = tilde.o
-COLORSOBJ = colors.o parse-colors.o
-OBJECTS = readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
-	  rltty.o complete.o bind.o isearch.o display.o signals.o \
-	  util.o kill.o undo.o macro.o input.o callback.o terminal.o \
-	  text.o nls.o misc.o $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
-	  xmalloc.o xfree.o compat.o 
+HISTOBJ = history.$(OBJEXT) histexpand.$(OBJEXT) histfile.$(OBJEXT) histsearch.$(OBJEXT) shell.$(OBJEXT) savestring.$(OBJEXT) \
+	  mbutil.$(OBJEXT)
+TILDEOBJ = tilde.$(OBJEXT)
+COLORSOBJ = colors.$(OBJEXT) parse-colors.$(OBJEXT)
+OBJECTS = readline.$(OBJEXT) vi_mode.$(OBJEXT) funmap.$(OBJEXT) keymaps.$(OBJEXT) parens.$(OBJEXT) search.$(OBJEXT) \
+	  rltty.$(OBJEXT) complete.$(OBJEXT) bind.$(OBJEXT) isearch.$(OBJEXT) display.$(OBJEXT) signals.$(OBJEXT) \
+	  util.$(OBJEXT) kill.$(OBJEXT) undo.$(OBJEXT) macro.$(OBJEXT) input.$(OBJEXT) callback.$(OBJEXT) terminal.$(OBJEXT) \
+	  text.$(OBJEXT) nls.$(OBJEXT) misc.$(OBJEXT) $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
+	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT)
 
 # The texinfo files which document this library.
 DOCSOURCE = doc/rlman.texinfo doc/rltech.texinfo doc/rluser.texinfo
@@ -130,9 +130,9 @@ libreadline.a: $(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 	-test -n "$(RANLIB)" && $(RANLIB) $@
 
-libhistory.a: $(HISTOBJ) xmalloc.o xfree.o
+libhistory.a: $(HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT)
 	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.o xfree.o
+	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT)
 	-test -n "$(RANLIB)" && $(RANLIB) $@
 
 documentation: force
@@ -141,7 +141,7 @@ documentation: force
 
 # Since tilde.c is shared between readline and bash, make sure we compile
 # it with the right flags when it's built as part of readline
-tilde.o:	tilde.c
+tilde.$(OBJEXT):	tilde.c
 	rm -f $@
 	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -c $(srcdir)/tilde.c
 
@@ -172,226 +172,226 @@ distclean maintainer-clean: clean
 	$(RM) TAGS tags
 
 # Dependencies
-bind.o: ansi_stdlib.h posixstat.h
-bind.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-bind.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-bind.o: history.h rlstdc.h
-callback.o: rlconf.h ansi_stdlib.h
-callback.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-callback.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-compat.o: ${BUILD_DIR}/config.h
-compat.o: rlstdc.h rltypedefs.h
-complete.o: ansi_stdlib.h posixdir.h posixstat.h
-complete.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-complete.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-complete.o: colors.h
-display.o: ansi_stdlib.h posixstat.h
-display.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-display.o: tcap.h
-display.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-display.o: history.h rlstdc.h
-funmap.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-funmap.o: rlconf.h ansi_stdlib.h rlstdc.h
-funmap.o: ${BUILD_DIR}/config.h
-histexpand.o: ansi_stdlib.h
-histexpand.o: history.h histlib.h rlstdc.h
-histexpand.o: ${BUILD_DIR}/config.h
-histfile.o: ansi_stdlib.h
-histfile.o: history.h histlib.h rlstdc.h
-histfile.o: ${BUILD_DIR}/config.h
-history.o: ansi_stdlib.h
-history.o: history.h histlib.h rlstdc.h
-history.o: ${BUILD_DIR}/config.h
-histsearch.o: ansi_stdlib.h
-histsearch.o: history.h histlib.h rlstdc.h
-histsearch.o: ${BUILD_DIR}/config.h
-input.o: ansi_stdlib.h
-input.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-input.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-isearch.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-isearch.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-isearch.o: ansi_stdlib.h history.h rlstdc.h
-keymaps.o: emacs_keymap.c vi_keymap.c
-keymaps.o: keymaps.h rltypedefs.h chardefs.h rlconf.h ansi_stdlib.h
-keymaps.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-keymaps.o: ${BUILD_DIR}/config.h rlstdc.h
-kill.o: ansi_stdlib.h
-kill.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-kill.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-kill.o: history.h rlstdc.h
-macro.o: ansi_stdlib.h
-macro.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-macro.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-macro.o: history.h rlstdc.h
-mbutil.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h rlmbutil.h
-mbutil.o: readline.h keymaps.h rltypedefs.h chardefs.h rlstdc.h
-misc.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-misc.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-misc.o: history.h rlstdc.h ansi_stdlib.h
-nls.o: ansi_stdlib.h
-nls.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-nls.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-nls.o: history.h rlstdc.h
-parens.o: rlconf.h
-parens.o: ${BUILD_DIR}/config.h
-parens.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-readline.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-readline.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-readline.o: history.h rlstdc.h
-readline.o: posixstat.h ansi_stdlib.h posixjmp.h
-rltty.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-rltty.o: rltty.h
-rltty.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-savestring.o: ${BUILD_DIR}/config.h
-search.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-search.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-search.o: ansi_stdlib.h history.h rlstdc.h
-shell.o: ${BUILD_DIR}/config.h ansi_stdlib.h
-signals.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-signals.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-signals.o: history.h rlstdc.h
-terminal.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-terminal.o: tcap.h
-terminal.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-terminal.o: history.h rlstdc.h
-text.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-text.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-text.o: history.h rlstdc.h ansi_stdlib.h
-rltty.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-tilde.o: ansi_stdlib.h
-tilde.o: ${BUILD_DIR}/config.h
-tilde.o: tilde.h
-undo.o: ansi_stdlib.h
-undo.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-undo.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-undo.o: history.h rlstdc.h xmalloc.h
-util.o: posixjmp.h ansi_stdlib.h
-util.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-util.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-vi_mode.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
-vi_mode.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
-vi_mode.o: history.h ansi_stdlib.h rlstdc.h
-xmalloc.o: ${BUILD_DIR}/config.h ansi_stdlib.h
-xfree.o: ${BUILD_DIR}/config.h ansi_stdlib.h
+bind.$(OBJEXT): ansi_stdlib.h posixstat.h
+bind.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+bind.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+bind.$(OBJEXT): history.h rlstdc.h
+callback.$(OBJEXT): rlconf.h ansi_stdlib.h
+callback.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+callback.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+compat.$(OBJEXT): ${BUILD_DIR}/config.h
+compat.$(OBJEXT): rlstdc.h rltypedefs.h
+complete.$(OBJEXT): ansi_stdlib.h posixdir.h posixstat.h
+complete.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+complete.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+complete.$(OBJEXT): colors.h
+display.$(OBJEXT): ansi_stdlib.h posixstat.h
+display.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+display.$(OBJEXT): tcap.h
+display.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+display.$(OBJEXT): history.h rlstdc.h
+funmap.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+funmap.$(OBJEXT): rlconf.h ansi_stdlib.h rlstdc.h
+funmap.$(OBJEXT): ${BUILD_DIR}/config.h
+histexpand.$(OBJEXT): ansi_stdlib.h
+histexpand.$(OBJEXT): history.h histlib.h rlstdc.h
+histexpand.$(OBJEXT): ${BUILD_DIR}/config.h
+histfile.$(OBJEXT): ansi_stdlib.h
+histfile.$(OBJEXT): history.h histlib.h rlstdc.h
+histfile.$(OBJEXT): ${BUILD_DIR}/config.h
+history.$(OBJEXT): ansi_stdlib.h
+history.$(OBJEXT): history.h histlib.h rlstdc.h
+history.$(OBJEXT): ${BUILD_DIR}/config.h
+histsearch.$(OBJEXT): ansi_stdlib.h
+histsearch.$(OBJEXT): history.h histlib.h rlstdc.h
+histsearch.$(OBJEXT): ${BUILD_DIR}/config.h
+input.$(OBJEXT): ansi_stdlib.h
+input.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+input.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+isearch.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+isearch.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+isearch.$(OBJEXT): ansi_stdlib.h history.h rlstdc.h
+keymaps.$(OBJEXT): emacs_keymap.c vi_keymap.c
+keymaps.$(OBJEXT): keymaps.h rltypedefs.h chardefs.h rlconf.h ansi_stdlib.h
+keymaps.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+keymaps.$(OBJEXT): ${BUILD_DIR}/config.h rlstdc.h
+kill.$(OBJEXT): ansi_stdlib.h
+kill.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+kill.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+kill.$(OBJEXT): history.h rlstdc.h
+macro.$(OBJEXT): ansi_stdlib.h
+macro.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+macro.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+macro.$(OBJEXT): history.h rlstdc.h
+mbutil.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h rlmbutil.h
+mbutil.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h rlstdc.h
+misc.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+misc.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+misc.$(OBJEXT): history.h rlstdc.h ansi_stdlib.h
+nls.$(OBJEXT): ansi_stdlib.h
+nls.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+nls.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+nls.$(OBJEXT): history.h rlstdc.h
+parens.$(OBJEXT): rlconf.h
+parens.$(OBJEXT): ${BUILD_DIR}/config.h
+parens.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+readline.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+readline.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+readline.$(OBJEXT): history.h rlstdc.h
+readline.$(OBJEXT): posixstat.h ansi_stdlib.h posixjmp.h
+rltty.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+rltty.$(OBJEXT): rltty.h
+rltty.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+savestring.$(OBJEXT): ${BUILD_DIR}/config.h
+search.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+search.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+search.$(OBJEXT): ansi_stdlib.h history.h rlstdc.h
+shell.$(OBJEXT): ${BUILD_DIR}/config.h ansi_stdlib.h
+signals.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+signals.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+signals.$(OBJEXT): history.h rlstdc.h
+terminal.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+terminal.$(OBJEXT): tcap.h
+terminal.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+terminal.$(OBJEXT): history.h rlstdc.h
+text.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+text.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+text.$(OBJEXT): history.h rlstdc.h ansi_stdlib.h
+rltty.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+tilde.$(OBJEXT): ansi_stdlib.h
+tilde.$(OBJEXT): ${BUILD_DIR}/config.h
+tilde.$(OBJEXT): tilde.h
+undo.$(OBJEXT): ansi_stdlib.h
+undo.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+undo.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+undo.$(OBJEXT): history.h rlstdc.h xmalloc.h
+util.$(OBJEXT): posixjmp.h ansi_stdlib.h
+util.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+util.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+vi_mode.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
+vi_mode.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+vi_mode.$(OBJEXT): history.h ansi_stdlib.h rlstdc.h
+xmalloc.$(OBJEXT): ${BUILD_DIR}/config.h ansi_stdlib.h
+xfree.$(OBJEXT): ${BUILD_DIR}/config.h ansi_stdlib.h
 
-colors.o: ${BUILD_DIR}/config.h colors.h
-colors.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-colors.o: rlconf.h
-colors.o: ansi_stdlib.h posixstat.h
-parse-colors.o: ${BUILD_DIR}/config.h colors.h parse-colors.h
-parse-colors.o: rldefs.h rlconf.h
-parse-colors.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+colors.$(OBJEXT): ${BUILD_DIR}/config.h colors.h
+colors.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+colors.$(OBJEXT): rlconf.h
+colors.$(OBJEXT): ansi_stdlib.h posixstat.h
+parse-colors.$(OBJEXT): ${BUILD_DIR}/config.h colors.h parse-colors.h
+parse-colors.$(OBJEXT): rldefs.h rlconf.h
+parse-colors.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
 
-bind.o: rlshell.h
-histfile.o: rlshell.h
-nls.o: rlshell.h
-readline.o: rlshell.h
-shell.o: rlshell.h
-terminal.o: rlshell.h
-histexpand.o: rlshell.h
+bind.$(OBJEXT): rlshell.h
+histfile.$(OBJEXT): rlshell.h
+nls.$(OBJEXT): rlshell.h
+readline.$(OBJEXT): rlshell.h
+shell.$(OBJEXT): rlshell.h
+terminal.$(OBJEXT): rlshell.h
+histexpand.$(OBJEXT): rlshell.h
 
-bind.o: rlprivate.h
-callback.o: rlprivate.h
-complete.o: rlprivate.h
-display.o: rlprivate.h
-input.o: rlprivate.h
-isearch.o: rlprivate.h
-kill.o: rlprivate.h
-macro.o: rlprivate.h
-mbutil.o: rlprivate.h
-misc.o: rlprivate.h
-nls.o: rlprivate.h
-parens.o: rlprivate.h
-readline.o: rlprivate.h
-rltty.o: rlprivate.h
-search.o: rlprivate.h
-signals.o: rlprivate.h
-terminal.o: rlprivate.h
-text.o: rlprivate.h
-undo.o: rlprivate.h
-util.o: rlprivate.h
-vi_mode.o: rlprivate.h
-colors.o: rlprivate.h
-parse-colors.o: rlprivate.h
+bind.$(OBJEXT): rlprivate.h
+callback.$(OBJEXT): rlprivate.h
+complete.$(OBJEXT): rlprivate.h
+display.$(OBJEXT): rlprivate.h
+input.$(OBJEXT): rlprivate.h
+isearch.$(OBJEXT): rlprivate.h
+kill.$(OBJEXT): rlprivate.h
+macro.$(OBJEXT): rlprivate.h
+mbutil.$(OBJEXT): rlprivate.h
+misc.$(OBJEXT): rlprivate.h
+nls.$(OBJEXT): rlprivate.h
+parens.$(OBJEXT): rlprivate.h
+readline.$(OBJEXT): rlprivate.h
+rltty.$(OBJEXT): rlprivate.h
+search.$(OBJEXT): rlprivate.h
+signals.$(OBJEXT): rlprivate.h
+terminal.$(OBJEXT): rlprivate.h
+text.$(OBJEXT): rlprivate.h
+undo.$(OBJEXT): rlprivate.h
+util.$(OBJEXT): rlprivate.h
+vi_mode.$(OBJEXT): rlprivate.h
+colors.$(OBJEXT): rlprivate.h
+parse-colors.$(OBJEXT): rlprivate.h
 
-bind.o: xmalloc.h
-complete.o: xmalloc.h  
-display.o: xmalloc.h
-funmap.o: xmalloc.h
-histexpand.o: xmalloc.h   
-histfile.o: xmalloc.h
-history.o: xmalloc.h
-input.o: xmalloc.h
-isearch.o: xmalloc.h
-keymaps.o: xmalloc.h
-kill.o: xmalloc.h
-macro.o: xmalloc.h
-mbutil.o: xmalloc.h
-misc.o: xmalloc.h  
-readline.o: xmalloc.h   
-savestring.o: xmalloc.h
-search.o: xmalloc.h
-shell.o: xmalloc.h   
-terminal.o: xmalloc.h  
-text.o: xmalloc.h
-tilde.o: xmalloc.h 
-undo.o: xmalloc.h
-util.o: xmalloc.h
-vi_mode.o: xmalloc.h 
-xfree.o: xmalloc.h
-xmalloc.o: xmalloc.h
-colors.o: xmalloc.h
-parse-colors.o: xmalloc.h
+bind.$(OBJEXT): xmalloc.h
+complete.$(OBJEXT): xmalloc.h
+display.$(OBJEXT): xmalloc.h
+funmap.$(OBJEXT): xmalloc.h
+histexpand.$(OBJEXT): xmalloc.h
+histfile.$(OBJEXT): xmalloc.h
+history.$(OBJEXT): xmalloc.h
+input.$(OBJEXT): xmalloc.h
+isearch.$(OBJEXT): xmalloc.h
+keymaps.$(OBJEXT): xmalloc.h
+kill.$(OBJEXT): xmalloc.h
+macro.$(OBJEXT): xmalloc.h
+mbutil.$(OBJEXT): xmalloc.h
+misc.$(OBJEXT): xmalloc.h
+readline.$(OBJEXT): xmalloc.h
+savestring.$(OBJEXT): xmalloc.h
+search.$(OBJEXT): xmalloc.h
+shell.$(OBJEXT): xmalloc.h
+terminal.$(OBJEXT): xmalloc.h
+text.$(OBJEXT): xmalloc.h
+tilde.$(OBJEXT): xmalloc.h
+undo.$(OBJEXT): xmalloc.h
+util.$(OBJEXT): xmalloc.h
+vi_mode.$(OBJEXT): xmalloc.h
+xfree.$(OBJEXT): xmalloc.h
+xmalloc.$(OBJEXT): xmalloc.h
+colors.$(OBJEXT): xmalloc.h
+parse-colors.$(OBJEXT): xmalloc.h
 
-complete.o: rlmbutil.h
-display.o: rlmbutil.h
-histexpand.o: rlmbutil.h
-input.o: rlmbutil.h
-isearch.o: rlmbutil.h
-mbutil.o: rlmbutil.h
-misc.o: rlmbutil.h
-readline.o: rlmbutil.h
-search.o: rlmbutil.h
-text.o: rlmbutil.h
-vi_mode.o: rlmbutil.h
-colors.o: rlmbutil.h
-parse-colors.o: rlmbutil.h
+complete.$(OBJEXT): rlmbutil.h
+display.$(OBJEXT): rlmbutil.h
+histexpand.$(OBJEXT): rlmbutil.h
+input.$(OBJEXT): rlmbutil.h
+isearch.$(OBJEXT): rlmbutil.h
+mbutil.$(OBJEXT): rlmbutil.h
+misc.$(OBJEXT): rlmbutil.h
+readline.$(OBJEXT): rlmbutil.h
+search.$(OBJEXT): rlmbutil.h
+text.$(OBJEXT): rlmbutil.h
+vi_mode.$(OBJEXT): rlmbutil.h
+colors.$(OBJEXT): rlmbutil.h
+parse-colors.$(OBJEXT): rlmbutil.h
 
 # Rules for deficient makes, like SunOS and Solaris
-bind.o: bind.c
-callback.o: callback.c
-compat.o: compat.c
-complete.o: complete.c
-display.o: display.c
-funmap.o: funmap.c
-input.o: input.c
-isearch.o: isearch.c
-keymaps.o: keymaps.c emacs_keymap.c vi_keymap.c
-kill.o: kill.c
-macro.o: macro.c
-mbutil.o: mbutil.c
-misc.o: misc.c
-nls.o: nls.c
-parens.o: parens.c
-readline.o: readline.c
-rltty.o: rltty.c
-savestring.o: savestring.c
-search.o: search.c
-shell.o: shell.c
-signals.o: signals.c
-terminal.o: terminal.c
-text.o: text.c
-tilde.o: tilde.c
-undo.o: undo.c
-util.o: util.c
-vi_mode.o: vi_mode.c
-xfree.o: xfree.c
-xmalloc.o: xmalloc.c
+bind.$(OBJEXT): bind.c
+callback.$(OBJEXT): callback.c
+compat.$(OBJEXT): compat.c
+complete.$(OBJEXT): complete.c
+display.$(OBJEXT): display.c
+funmap.$(OBJEXT): funmap.c
+input.$(OBJEXT): input.c
+isearch.$(OBJEXT): isearch.c
+keymaps.$(OBJEXT): keymaps.c emacs_keymap.c vi_keymap.c
+kill.$(OBJEXT): kill.c
+macro.$(OBJEXT): macro.c
+mbutil.$(OBJEXT): mbutil.c
+misc.$(OBJEXT): misc.c
+nls.$(OBJEXT): nls.c
+parens.$(OBJEXT): parens.c
+readline.$(OBJEXT): readline.c
+rltty.$(OBJEXT): rltty.c
+savestring.$(OBJEXT): savestring.c
+search.$(OBJEXT): search.c
+shell.$(OBJEXT): shell.c
+signals.$(OBJEXT): signals.c
+terminal.$(OBJEXT): terminal.c
+text.$(OBJEXT): text.c
+tilde.$(OBJEXT): tilde.c
+undo.$(OBJEXT): undo.c
+util.$(OBJEXT): util.c
+vi_mode.$(OBJEXT): vi_mode.c
+xfree.$(OBJEXT): xfree.c
+xmalloc.$(OBJEXT): xmalloc.c
 
-colors.o: colors.c
-parse-colors.o: parse-colors.c
+colors.$(OBJEXT): colors.c
+parse-colors.$(OBJEXT): parse-colors.c
 
-histexpand.o: histexpand.c
-histfile.o: histfile.c
-history.o: history.c
-histsearch.o: histsearch.c
+histexpand.$(OBJEXT): histexpand.c
+histfile.$(OBJEXT): histfile.c
+history.$(OBJEXT): history.c
+histsearch.$(OBJEXT): histsearch.c

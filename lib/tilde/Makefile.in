@@ -4,7 +4,7 @@
 #								   #
 ####################################################################
 
-# Copyright (C) 1996-2021 Free Software Foundation, Inc.     
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 topdir = @top_srcdir@
 BUILD_DIR = @BUILD_DIR@
-
+OBJEXT = @OBJEXT@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -40,7 +40,7 @@ SHELL = @MAKE_SHELL@
 
 PROFILE_FLAGS = @PROFILE_FLAGS@
 
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ -DHAVE_CONFIG_H -DHAVE_UNISTD_H
 LOCAL_CFLAGS = @LOCAL_CFLAGS@
 STYLE_CFLAGS = @STYLE_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
@@ -51,13 +51,14 @@ LOCAL_DEFS = @LOCAL_DEFS@
 
 BASHINCDIR = ${topdir}/include
 
-INCLUDES = -I. -I../.. -I$(topdir) -I${BASHINCDIR} -I$(topdir)/lib
+INCLUDES = -I. -I../..  -I$(topdir)/gnu -I$(topdir) -I${BASHINCDIR} -I$(topdir)/lib
 
 CCFLAGS = ${ASAN_CFLAGS} $(PROFILE_FLAGS) $(DEFS) $(LOCAL_DEFS) $(CPPFLAGS) \
 	  ${INCLUDES} $(STYLE_CFLAGS) $(LOCAL_CFLAGS) $(CFLAGS)
 
-.c.o:
-	$(CC) -c $(CCFLAGS) $<
+%.obj: %.c
+	${RM} $@
+	$(CC) $(CCFLAGS) -c $<
 
 # The name of the library target.
 LIBRARY_NAME = libtilde.a
@@ -68,7 +69,7 @@ CSOURCES = $(srcdir)/tilde.c
 # The header files for this library.
 HSOURCES = $(srcdir)/tilde.h
 
-OBJECTS = tilde.o
+OBJECTS = tilde.$(OBJEXT)
 
 # The texinfo files which document this library.
 DOCSOURCE = doc/tilde.texi
@@ -120,8 +121,9 @@ mostlyclean: clean
 #								     #
 ######################################################################
 
-tilde.o: tilde.h $(BASHINCDIR)/ansi_stdlib.h
-tilde.o: $(BUILD_DIR)/config.h
+tilde.$(OBJEXT): tilde.h $(BASHINCDIR)/ansi_stdlib.h
+tilde.$(OBJEXT): $(BUILD_DIR)/config.h
 
 # Rules for deficient makes, like SunOS and Solaris
-tilde.o: tilde.c
+tilde.$(OBJEXT): tilde.c
+	$(CC) -c $(CCFLAGS) tilde.c
