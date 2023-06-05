@@ -48,6 +48,8 @@ extern int yydebug;
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
+#undef IN
+#undef WORD
   enum yytokentype
   {
     YYEMPTY = -2,
@@ -72,12 +74,12 @@ extern int yydebug;
     COND_START = 273,              /* COND_START  */
     COND_END = 274,                /* COND_END  */
     COND_ERROR = 275,              /* COND_ERROR  */
-    YIN = 276,                      /* IN  */
+    IN = 276,                      /* IN  */
     BANG = 277,                    /* BANG  */
     TIME = 278,                    /* TIME  */
     TIMEOPT = 279,                 /* TIMEOPT  */
     TIMEIGN = 280,                 /* TIMEIGN  */
-    YWORD = 281,                    /* WORD  */
+    WORD = 281,                    /* WORD  */
     ASSIGNMENT_WORD = 282,         /* ASSIGNMENT_WORD  */
     REDIR_WORD = 283,              /* REDIR_WORD  */
     NUMBER = 284,                  /* NUMBER  */
@@ -128,12 +130,12 @@ extern int yydebug;
 #define COND_START 273
 #define COND_END 274
 #define COND_ERROR 275
-#define YIN 276
+#define IN 276
 #define BANG 277
 #define TIME 278
 #define TIMEOPT 279
 #define TIMEIGN 280
-#define YWORD 281
+#define WORD 281
 #define ASSIGNMENT_WORD 282
 #define REDIR_WORD 283
 #define NUMBER 284
@@ -163,7 +165,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 340 "./parse.y"
+#line 347 "./parse.y"
 
   WORD_DESC *word;		/* the word that we read. */
   int number;			/* the number that we read. */

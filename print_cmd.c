@@ -17,7 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with Bash.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#define IN
+#define WORD USHORT
 #include "config.h"
 
 #include <stdio.h>
@@ -42,6 +43,7 @@
 
 #include "shell.h"
 #include "flags.h"
+
 #include <y.tab.h>	/* use <...> so we pick it up from the build directory */
 #include "input.h"
 
