@@ -45,7 +45,7 @@
 #include "test.h"
 #include "trap.h"
 #include "pathexp.h"
-
+#include "osfixes.h"
 #include "builtins/common.h"
 
 #if defined (HAVE_MBSTR_H) && defined (HAVE_MBSCHR)
@@ -593,7 +593,11 @@ void
 check_dev_tty ()
 {
   int tty_fd;
+
   char *tty;
+#ifdef _WIN32
+  char buf[1024];
+#endif  
 
   tty_fd = open ("/dev/tty", O_RDWR|O_NONBLOCK);
 
@@ -602,7 +606,10 @@ check_dev_tty ()
 #ifndef _WIN32
       tty = (char *)ttyname (fileno (stdin));
 #else
-      tty = NULL;
+      if (ttyname_r(fileno (stdin),buf, sizeof(buf)))
+        tty = buf;
+      else
+        tty = 0;
 #endif
       if (tty == 0)
 	return;

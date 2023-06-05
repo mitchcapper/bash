@@ -1162,6 +1162,8 @@ fi
 
 AM_CONDITIONAL([USE_JOB_CONTROL], [test "$opt_job_control" = yes])
 
+AM_CONDITIONAL([USE_PDCURSES], [test "$host_os" = mingw32])
+
 
 dnl Defines that we want to propagate to the Makefiles in subdirectories,
 dnl like glob and readline

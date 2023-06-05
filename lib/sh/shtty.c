@@ -211,12 +211,16 @@ ttfd_noecho (fd, ttp)
 int
 ttnoecho ()
 {
+#ifndef _WIN32
   TTYSTRUCT tt;
 
   if (ttsaved == 0)
     return -1;
   tt = ttin;
   return (ttfd_noecho (0, &tt));
+#else
+  return noecho();
+#endif  
 }
 
 /*
@@ -328,10 +332,15 @@ ttfd_cbreak (fd, ttp)
 int
 ttcbreak ()
 {
+  #ifndef _WIN32
   TTYSTRUCT tt;
 
   if (ttsaved == 0)
     return -1;
   tt = ttin;
   return (ttfd_cbreak (0, &tt));
+  #else
+  noecho();
+  return cbreak();
+  #endif
 }

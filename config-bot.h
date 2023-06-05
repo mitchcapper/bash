@@ -213,4 +213,7 @@
   #include <winsock2.h>
   #include <ws2tcpip.h>
 #endif
+#define PDC_NCMOUSE
+#define PDC_FORCE_UTF8
+#define PDC_WIDE
 #endif

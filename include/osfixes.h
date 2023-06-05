@@ -120,7 +120,11 @@ static char *signal_names[36] = {
 #define		PENDIN		0x20000000	/* re-echo input buffer at next read */
 #define		DECCTQ		0x40000000	/* only ^Q starts after ^S */
 #define		NOFLSH		0x80000000
+#include "term.h"
 
+/*
+
+pdcurses provides these now 
 
 static int tgetflag (const char *name){
   return -1;
@@ -142,6 +146,6 @@ static int tputs(const char *str, int affcnt, int (*putc)(int)){
 static char *tgoto(const char *cap, int col, int row){
   return NULL;
 }
-
+*/
 
 #endif
