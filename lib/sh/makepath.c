@@ -26,7 +26,7 @@
 #  endif
 #  include <unistd.h>
 #endif
-
+#include "filename.h"
 #include <bashansi.h>
 #include "shell.h"
 
@@ -66,11 +66,8 @@ static char *nullpath = "";
     pathlen = 1; \
   } while (0)
 
-char *
-sh_makepath (path, dir, flags)
-     const char *path, *dir;
-     int flags;
-{
+char* sh_makepath(const char* path, const char* dir, int flags){
+
   int dirlen, pathlen;
   char *ret, *xpath, *xdir, *r, *s;
 
@@ -94,7 +91,7 @@ sh_makepath (path, dir, flags)
 	MAKEDOT();
     }
   else if ((flags & MP_IGNDOT) && path[0] == '.' && (path[1] == '\0' ||
-						     (path[1] == '/' && path[2] == '\0')))
+						     (ISSLASH( path[1] ) && path[2] == '\0')))
     {
       xpath = nullpath;
       pathlen = 0;
@@ -107,7 +104,7 @@ sh_makepath (path, dir, flags)
 
   xdir = (char *)dir;
   dirlen = strlen (xdir);
-  if ((flags & MP_RMDOT) && dir[0] == '.' && dir[1] == '/')
+  if ((flags & MP_RMDOT) && dir[0] == '.' && ISSLASH(dir[1] ))
     {
       xdir += 2;
       dirlen -= 2;
@@ -117,8 +114,8 @@ sh_makepath (path, dir, flags)
   s = xpath;
   while (*s)
     *r++ = *s++;
-  if (s > xpath && s[-1] != '/')
-    *r++ = '/';      
+  if (s > xpath && !ISSLASH(s[-1]))
+    *r++ = DIR_SEPARATOR;
   s = xdir;
   while (*r++ = *s++)
     ;
