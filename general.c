@@ -37,7 +37,7 @@
 #include <errno.h>
 
 #include "bashintl.h"
-
+#include "filename.h"
 #include "shell.h"
 #include "parser.h"
 #include "flags.h"
@@ -551,7 +551,7 @@ sh_unset_nodelay_mode (fd)
 
   return 0;
 #else
-  return -1;
+  return dcalledint(-1,"TERM +ndelay");
 #endif
 }
 
@@ -653,12 +653,12 @@ same_file (path1, path2, stp1, stp2)
    duplicating FD onto them.  MAXFD says where to start checking the
    file descriptors.  If it's less than 20, we get the maximum value
    available from getdtablesize(2). */
-int
-move_to_high_fd (fd, check_new, maxfd)
-     int fd, check_new, maxfd;
-{
+int move_to_high_fd(int fd, int check_new, int maxfd) {
+	return move_to_high_fd_w_flags(fd, check_new, maxfd,0);
+}
+int move_to_high_fd_w_flags(int fd, int check_new, int maxfd, int flags) {
   int script_fd, nfds, ignore;
-
+  int oldAssert = MSVCAssertTmpSilenceAll();
   if (maxfd < 20)
     {
       nfds = getdtablesize ();
@@ -674,15 +674,17 @@ move_to_high_fd (fd, check_new, maxfd)
     if (fcntl (nfds, F_GETFD, &ignore) == -1)
       break;
 
-  if (nfds > 3 && fd != nfds && (script_fd = dup2 (fd, nfds)) != -1)
+  if (nfds > 3 && fd != nfds && (script_fd = dup3 (fd, nfds, flags)) != -1)
     {
       if (check_new == 0 || fd != fileno (stderr))	/* don't close stderr */
 	close (fd);
+	  MSVCAssertTmpRestoreAll(oldAssert);
       return (script_fd);
     }
 
   /* OK, we didn't find one less than our artificial maximum; return the
      original file descriptor. */
+  MSVCAssertTmpRestoreAll(oldAssert);
   return (fd);
 }
  
@@ -829,7 +831,7 @@ int
 absolute_program (string)
      const char *string;
 {
-  return ((char *)mbschr (string, '/') != (char *)NULL);
+  return (LAST_SLASH_IN_PATH(string) != NULL);
 }
 
 /* **************************************************************** */
@@ -1019,15 +1021,25 @@ printable_filename (fn, flags)
 
   return newf;
 }
+char* _extract_colon_unit(BOOL IS_PATH, char* string, int* p_index);
+char* extract_path_unit(char* string, int* p_index) {
+	return _extract_colon_unit(TRUE, string, p_index);
+}
+char* extract_colon_unit(char* string, int* p_index) {
+	return _extract_colon_unit(FALSE, string, p_index);
+}
 
 /* Given a string containing units of information separated by colons,
    return the next one pointed to by (P_INDEX), or NULL if there are no more.
-   Advance (P_INDEX) to the character after the colon. */
-char *
-extract_colon_unit (string, p_index)
-     char *string;
-     int *p_index;
-{
+   Advance (P_INDEX) to the character after the colon.
+
+   for windows we will allow : or ; to separate the path, if there is only one letter before the colon however we assume it is a drive path
+   */
+char* _extract_colon_unit(BOOL IS_PATH, char* string, int* p_index){
+#ifndef  _WIN32//if its not windows normal colon logic works
+	IS_WIN_PATH = false;
+#endif // ! _WIN32
+
   int i, start, len;
   char *value;
 
@@ -1045,10 +1057,10 @@ extract_colon_unit (string, p_index)
      `:'.  If I is 0, then the path has a leading colon.  Trailing colons
      are handled OK by the `else' part of the if statement; an empty
      string is returned in that case. */
-  if (i && string[i] == ':')
+  if (i && (string[i] == ':' || (IS_PATH && string[i] == ';') ))
     i++;
 
-  for (start = i; string[i] && string[i] != ':'; i++)
+  for (start = i; string[i] && ( (string[i] != ':' && ( ! IS_PATH || string[i] != ';'))  || (IS_PATH && (i-start) == 1)); i++)
     ;
 
   *p_index = i;

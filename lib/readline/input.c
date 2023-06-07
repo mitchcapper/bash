@@ -828,8 +828,8 @@ rl_getc (FILE *stream)
 
       /* We know at this point that _rl_caught_signal == 0 */
 
-#if defined (__MINGW32__)
-      if (isatty (fd)
+#if defined (__MINGW32__) || defined (_WIN32)
+      if (isatty (fd))
 	return (_getch ());	/* "There is no error return." */
 #endif
       result = 0;

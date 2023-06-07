@@ -383,6 +383,8 @@ read_command ()
 #ifndef _WIN32
 	      old_alrm = set_signal_handler (SIGALRM, alrm_catcher);
 	      alarm (tmout_len);
+#else
+        dcalled("SIG");
 #endif
 	    }
 	}
@@ -398,6 +400,8 @@ read_command ()
 #ifndef _WIN32
       alarm(0);
       set_signal_handler (SIGALRM, old_alrm);
+#else
+    dcalled("SIG");
 #endif
     }
 

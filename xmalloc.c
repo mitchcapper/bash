@@ -97,6 +97,8 @@ allocerr (func, bytes)
       fatal_error (_("%s: cannot allocate %lu bytes"), func, (unsigned long)bytes);
 #endif /* !HAVE_SBRK */
 }
+#ifndef  _WIN32
+
 
 /* Return a pointer to free()able block of memory large enough
    to hold BYTES number of bytes.  If the memory cannot be allocated,
@@ -141,7 +143,7 @@ xrealloc (pointer, bytes)
 
   return (temp);
 }
-
+#endif // ! _WIN32
 /* Use this as the function to call when adding unwind protects so we
    don't need to know what free() returns. */
 void

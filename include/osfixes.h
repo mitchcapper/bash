@@ -3,69 +3,9 @@
 #include <config.h>
 
 
-static int kill(pid_t pid, int sig){
-  return -1;
-}
-//#define killpg kill
-
-static int chmod(const char *path, mode_t mode){
-	return 0;
-}
-static int fchmod(int fd, mode_t mode){
-	return 0;
-}
-static unsigned int alarm(unsigned int seconds){
-	return -1;
-}
-static pid_t getpgrp(pid_t pid){
-	return -1;
-}
-static pid_t getppid () {
-	return -1;
-}
-static pid_t wait(int *wstatus){
-	return -1;
-}
 
 
-static char *signal_names[36] = {
-    "EXIT",
-    "SIGHUP",
-    "SIGINT",
-    "SIGQUIT",
-    "SIGILL",
-    "SIGTRAP",
-    "SIGABRT",
-    "SIGEMT",
-    "SIGFPE",
-    "SIGKILL",
-    "SIGBUS",
-    "SIGSEGV",
-    "SIGSYS",
-    "SIGPIPE",
-    "SIGALRM",
-    "SIGTERM",
-    "SIGURG",
-    "SIGSTOP",
-    "SIGTSTP",
-    "SIGCONT",
-    "SIGCHLD",
-    "SIGTTIN",
-    "SIGTTOU",
-    "SIGIO",
-    "SIGXCPU",
-    "SIGXFSZ",
-    "SIGVTALRM",
-    "SIGPROF",
-    "SIGWINCH",
-    "SIGINFO",
-    "SIGUSR1",
-    "SIGUSR2",
-    "DEBUG",
-    "ERR",
-    "RETURN",
-    (char *)0x0
-};
+
 
 #define	TIOCHPCL	_IO('t', 2)		/* hang up on last close */
 #define	TIOCGETP	_IOR('t', 8,TTYSTRUCT)/* get parameters -- gtty */
@@ -147,5 +87,73 @@ static char *tgoto(const char *cap, int col, int row){
   return NULL;
 }
 */
+#define SIGALRM 14
+
+#include <spawn.h>
+
+typedef struct HandleExec {
+	BOOL am_child;
+	BOOL was_async;
+	pid_t child_pid;
+	char* cmd;
+	char** args;
+	posix_spawn_file_actions_t * actions;
+	posix_spawnattr_t* attrp;
+	char** envp;
+	int ___env_cur;
+	int ___env_max;
+
+} HandleExec;
+
+HandleExec* GetNewExec(void);
+static char* signal_names[36] = {
+	"EXIT",
+	"SIGHUP",
+	"SIGINT",
+	"SIGQUIT",
+	"SIGILL",
+	"SIGTRAP",
+	"SIGABRT",
+	"SIGEMT",
+	"SIGFPE",
+	"SIGKILL",
+	"SIGBUS",
+	"SIGSEGV",
+	"SIGSYS",
+	"SIGPIPE",
+	"SIGALRM",
+	"SIGTERM",
+	"SIGURG",
+	"SIGSTOP",
+	"SIGTSTP",
+	"SIGCONT",
+	"SIGCHLD",
+	"SIGTTIN",
+	"SIGTTOU",
+	"SIGIO",
+	"SIGXCPU",
+	"SIGXFSZ",
+	"SIGVTALRM",
+	"SIGPROF",
+	"SIGWINCH",
+	"SIGINFO",
+	"SIGUSR1",
+	"SIGUSR2",
+	"DEBUG",
+	"ERR",
+	"RETURN",
+	(char*)0x0
+};
+void DupeEnvVar(HandleExec* exec, const char* varLine);
+static void __DupeOrUpdateEnvVarPair(HandleExec* exec, BOOL CHECK_EXISTING, const char* varName, const char* value);
+void DupeEnvVarPair(HandleExec* exec, const char* varName, const char* value);
+void DupeOrUpdateEnvVarPair(HandleExec* exec, const char* varName, const char* value);
+void DestroyExec(HandleExec* exec);
+int kill(pid_t pid, int sig);
+int fchmod(int fd, mode_t mode);
+unsigned int alarm(unsigned int seconds);
+pid_t getpgrp(pid_t pid);
+pid_t getppid(void);
+pid_t wait(int* wstatus);
 
 #endif

@@ -39,6 +39,7 @@ ttgetattr(fd, ttp)
 int	fd;
 TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
 #ifdef TERMIOS_TTY_DRIVER
   return tcgetattr(fd, ttp);
 #else
@@ -58,6 +59,7 @@ ttsetattr(fd, ttp)
 int	fd;
 TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
 #ifdef TERMIOS_TTY_DRIVER
   return tcsetattr(fd, TCSADRAIN, ttp);
 #else
@@ -75,6 +77,7 @@ TTYSTRUCT *ttp;
 void
 ttsave()
 {
+  dcalled("TERM");
   if (ttsaved)
    return;
   ttgetattr (0, &ttin);
@@ -85,6 +88,7 @@ ttsave()
 void
 ttrestore()
 {
+  dcalled("TERM");
   if (ttsaved == 0)
     return;
   ttsetattr (0, &ttin);
@@ -97,6 +101,7 @@ TTYSTRUCT *
 ttattr (fd)
      int fd;
 {
+  dcalled("TERM");
   if (ttsaved == 0)
     return ((TTYSTRUCT *)0);
   if (fd == 0)
@@ -115,6 +120,7 @@ int
 tt_setonechar(ttp)
      TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
 #if defined (TERMIOS_TTY_DRIVER) || defined (TERMIO_TTY_DRIVER)
 
   /* XXX - might not want this -- it disables erase and kill processing. */
@@ -171,6 +177,7 @@ ttfd_onechar (fd, ttp)
 int
 ttonechar ()
 {
+  dcalled("TERM");
   TTYSTRUCT tt;
 
   if (ttsaved == 0)
@@ -187,6 +194,7 @@ int
 tt_setnoecho(ttp)
      TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
 #if defined (TERMIOS_TTY_DRIVER) || defined (TERMIO_TTY_DRIVER)
   ttp->c_lflag &= ~(ECHO|ECHOK|ECHONL);
 #else
@@ -273,6 +281,7 @@ int
 tt_setnocanon (ttp)
      TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
 #if defined (TERMIOS_TTY_DRIVER) || defined (TERMIO_TTY_DRIVER)
   ttp->c_lflag &= ~ICANON;
 #endif
@@ -311,6 +320,7 @@ int
 tt_setcbreak(ttp)
      TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
   if (tt_setonechar (ttp) < 0)
     return -1;
   return (tt_setnoecho (ttp));
@@ -323,6 +333,7 @@ ttfd_cbreak (fd, ttp)
      int fd;
      TTYSTRUCT *ttp;
 {
+  dcalled("TERM");
   if (tt_setcbreak (ttp) < 0)
     return -1;
   return (ttsetattr (fd, ttp));

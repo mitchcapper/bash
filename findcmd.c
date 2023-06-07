@@ -310,8 +310,8 @@ get_next_path_element (path_list, path_index_pointer)
      int *path_index_pointer;
 {
   char *path;
-
-  path = extract_colon_unit (path_list, path_index_pointer);
+  
+  path = extract_path_unit(path_list, path_index_pointer);
 
   if (path == 0)
     return (path);
@@ -333,9 +333,7 @@ get_next_path_element (path_list, path_index_pointer)
    environment and should use the Posix standard path.
    Returns a newly-allocated string. */
 char *
-search_for_command (pathname, flags)
-     const char *pathname;
-     int flags;
+search_for_command (const char* pathname, int flags)
 {
   char *hashed_file, *command, *path_list;
   int temp_path, st;
@@ -497,15 +495,31 @@ user_command_matches (name, flags, state)
   return (match);
 }
 
+void AddFileSearchFlagsToStr(const char* pre_append, char* dbgBuffer, size_t buffer_size, int flags) {
+	strcat_s(dbgBuffer, buffer_size, pre_append);
+	strcat_s(dbgBuffer, buffer_size, ": ");
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_EXISTS", FS_EXISTS);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_EXECABLE", FS_EXECABLE);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_EXEC_PREFERRED", FS_EXEC_PREFERRED);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_EXEC_ONLY", FS_EXEC_ONLY);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_DIRECTORY", FS_DIRECTORY);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_NODIRS", FS_NODIRS);
+	flagAppend(dbgBuffer, buffer_size, flags, "FS_READABLE", FS_READABLE);
+	strcat_s(dbgBuffer, buffer_size, "  #  ");
+}
 static char *
 find_absolute_program (name, flags)
      const char *name;
      int flags;
 {
   int st;
+  char dbgBuffer[1024];
+  dbgBuffer[0] = 0;
+  AddFileSearchFlagsToStr("REQ_FLAGS", dbgBuffer, sizeof(dbgBuffer),flags);
+  
 
   st = file_status (name);
-
+  AddFileSearchFlagsToStr("HAS_FLAGS", dbgBuffer, sizeof(dbgBuffer), st);
   /* If the file doesn't exist, quit now. */
   if ((st & FS_EXISTS) == 0)
     return ((char *)NULL);
@@ -513,20 +527,22 @@ find_absolute_program (name, flags)
   /* If we only care about whether the file exists or not, return
      this filename.  Otherwise, maybe we care about whether this
      file is executable.  If it is, and that is what we want, return it. */
-  if ((flags & FS_EXISTS) || ((flags & FS_EXEC_ONLY) && (st & FS_EXECABLE)))
+  if ((flags & FS_NODIRS) && (st & FS_DIRECTORY))
+	  return (NULL);
+
+  if ((flags & FS_EXISTS) ||
+	  (
+		  ( (flags & FS_EXEC_ONLY) || (flags & FS_EXECABLE) || (flags & FS_EXEC_PREFERRED) ) && (st & FS_EXECABLE)
+	  )
+
+	 )// i thin kthe other cases get handled by find_in_path_element
     return (savestring (name));
 
   return (NULL);
 }
 
-static char *
-find_in_path_element (name, path, flags, name_len, dotinfop, rflagsp)
-     const char *name;
-     char *path;
-     int flags, name_len;
-     struct stat *dotinfop;
-     int *rflagsp;
-{
+static char* find_in_path_element(const char* name, char* path, int flags, int name_len, struct stat* dotinfop, int* rflagsp){
+
   int status;
   char *full_path, *xpath;
 
@@ -542,6 +558,29 @@ find_in_path_element (name, path, flags, name_len, dotinfop, rflagsp)
   full_path = sh_makepath (xpath, name, 0);
 
   status = file_status (full_path);
+  
+#ifdef  _WIN32
+  if (status == 0) {
+	  int tmpBufferSize = strlen(full_path) + 10;
+	  char* tmpBuffer = xmalloc(tmpBufferSize * sizeof(char));
+	  const char* exts[] = { "exe" };
+
+	  for (int x = 0; status == 0 && x < (sizeof(exts) / sizeof(exts[0])); x++) {
+		  strcpy_s(tmpBuffer, tmpBufferSize, full_path);
+		  strcat_s(tmpBuffer, tmpBufferSize, ".");
+		  strcat_s(tmpBuffer, tmpBufferSize, exts[x]);
+		  status = file_status(tmpBuffer);
+	  }
+	  if (status) {
+		  free(full_path);
+		  full_path = tmpBuffer;
+	  }
+	  else
+		  free(tmpBuffer);
+  }
+#endif //  _WIN32
+
+  
 
   if (xpath != path)
     free (xpath);

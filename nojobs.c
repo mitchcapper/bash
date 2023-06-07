@@ -28,6 +28,11 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 #define HAVE_UNISTD_H
+
+#include "execute.h"
+#include "spawn.h"
+#include <sys/wait.h>
+#define HAVE_WAITPID
 #endif
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
@@ -169,6 +174,16 @@ alloc_pid_list ()
       pid_list[i].pid = NO_PID;
       pid_list[i].status = pid_list[i].flags = 0;
     }
+}
+
+void UpdatePidInfoAfterSpawn(HandleExec* exec) {
+
+	last_made_pid = exec->child_pid;
+
+	if (exec->was_async)
+		last_asynchronous_pid = exec->child_pid;
+
+	add_pid(exec->child_pid, exec->was_async);
 }
 
 /* Return the offset within the PID_LIST array of an empty slot.  This can
@@ -495,19 +510,28 @@ siginterrupt (sig, flag)
    anything else with it.  ASYNC_P says what to do with the tty.  If
    non-zero, then don't give it away. */
 pid_t
-make_child (command, flags)
+make_child (command, flags, exec)
      char *command;
      int flags;
+	 HandleExec* exec;
 {
-  pid_t pid;
   int async_p, forksleep;
   sigset_t set, oset;
+
+#ifdef  _WIN32
+  dcalled("FORK for: %s, %i exec null: %i", command, flags, exec == NULL);
+#endif //  _WIN32
+
+  
 
   /* Discard saved memory. */
   if (command)
     free (command);
+  command = NULL;
 
   async_p = (flags & FORK_ASYNC);
+  if (exec)
+	  exec->was_async = async_p;
   start_pipeline ();
 
 #if defined (BUFFERED_INPUT)
@@ -532,27 +556,10 @@ make_child (command, flags)
 #endif
     }
 
-  /* Create the child, handle severe errors.  Retry on EAGAIN. */
-  forksleep = 1;
-#ifndef _WIN32
-  while ((pid = fork ()) < 0 && errno == EAGAIN && forksleep < FORKSLEEP_MAX)
-    {
-      sys_error ("fork: retry");
 
-#if defined (HAVE_WAITPID)
-      /* Posix systems with a non-blocking waitpid () system call available
-	 get another chance after zombies are reaped. */
-      reap_zombie_children ();
-      if (forksleep > 1 && sleep (forksleep) != 0)
-        break;
-#else
-      if (sleep (forksleep) != 0)
-	break;
-#endif /* HAVE_WAITPID */
-      forksleep <<= 1;
-    }
-#endif
-  if (pid != 0)
+
+
+
     if (interactive_shell)
       {
 #ifndef _WIN32
@@ -561,23 +568,15 @@ make_child (command, flags)
 #endif
       }
 
-  if (pid < 0)
-    {
-      sys_error ("fork");
-      last_command_exit_value = EX_NOEXEC;
-      throw_to_top_level ();
-    }
 
-  if (pid == 0)
-    {
 #if defined (BUFFERED_INPUT)
-      unset_bash_input (0);
+      unset_bash_input (0, exec);
 #endif /* BUFFERED_INPUT */
 
-      CLRINTERRUPT;	/* XXX - children have their own interrupt state */
+//      CLRINTERRUPT;	/* XXX - children have their own interrupt state */ //with a new process awlays no need to clear starts cleared
 
       /* Restore top-level signal mask. */
-      restore_sigmask ();
+      //restore_sigmask (); //dont need this as wellauto reset
 
 #if 0
       /* Ignore INT and QUIT in asynchronous children. */
@@ -585,22 +584,8 @@ make_child (command, flags)
 	last_asynchronous_pid = getpid ();
 #endif
 
-      subshell_environment |= SUBSHELL_IGNTRAP;
-
-      default_tty_job_signals ();
-    }
-  else
-    {
-      /* In the parent. */
-
-      last_made_pid = pid;
-
-      if (async_p)
-	last_asynchronous_pid = pid;
-
-      add_pid (pid, async_p);
-    }
-  return (pid);
+  
+  return (-1);
 }
 
 void
@@ -665,7 +650,7 @@ wait_for_single_pid (pid, flags)
      pid_t pid;
      int flags;
 {
-#ifndef _WIN32
+
   pid_t got_pid;
   WAIT status;
   int pstatus;
@@ -714,9 +699,7 @@ wait_for_single_pid (pid, flags)
   CHECK_WAIT_INTR;
 
   return (got_pid > 0 ? process_exit_status (status) : -1);
-#else
-  return (-1);
-#endif
+
 }
 
 /* Wait for all of the shell's children to exit.  Called by the `wait'
@@ -839,7 +822,7 @@ wait_for (pid, flags)
      pid_t pid;
      int flags;
 {
-#ifndef _WIN32
+
   int return_val, pstatus;
   pid_t got_pid;
   WAIT status;
@@ -953,9 +936,6 @@ wait_for (pid, flags)
     get_new_window_size (0, (int *)0, (int *)0);
 
   return (return_val);
-#else
-  return (-1);
-#endif
 }
 
 /* Send PID SIGNAL.  Returns -1 on failure, 0 on success.  If GROUP is non-zero,
@@ -1010,6 +990,8 @@ set_tty_state ()
 	return 0;
       ttsetattr (tty, &shell_tty_info);
     }
+#else
+  dcalled("TERM");    
 #endif
   return 0;
 }

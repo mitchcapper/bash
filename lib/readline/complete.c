@@ -665,6 +665,7 @@ stat_char (char *filename)
       if (ext && (_rl_stricmp (ext, ".exe") == 0 ||
 		  _rl_stricmp (ext, ".cmd") == 0 ||
 		  _rl_stricmp (ext, ".bat") == 0 ||
+      _rl_stricmp (ext, ".ps1") == 0 ||
 		  _rl_stricmp (ext, ".com") == 0))
 	character = '*';
 #else
@@ -2266,6 +2267,7 @@ char *
 rl_username_completion_function (const char *text, int state)
 {
 #if defined (__WIN32__) || defined (__OPENNT)
+  dcalled("USERCMPLT");
   return (char *)NULL;
 #else /* !__WIN32__ && !__OPENNT) */
   static char *username = (char *)NULL;

@@ -207,6 +207,7 @@
 /* #undef DEFAULT_MAIL_DIRECTORY */
 
 #ifdef _WIN32
+#define __WIN32__
 //with newer windows sdks the wrong header order in some files results in a SocketNotificationRetrieveEvents defined multiple times error, this is the easiest solution ive seen
 #ifndef WINSOCK_INCLUDED
 #define WINSOCK_INCLUDED 1
@@ -217,3 +218,5 @@
 #define PDC_FORCE_UTF8
 #define PDC_WIDE
 #endif
+
+#include "include/debug.h"

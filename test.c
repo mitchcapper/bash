@@ -29,7 +29,7 @@
 #endif
 
 #include <stdio.h>
-
+#include "timespec.h"
 #include "bashtypes.h"
 
 #if !defined (HAVE_LIMITS_H) && defined (HAVE_SYS_PARAM_H)

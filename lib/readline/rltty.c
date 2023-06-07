@@ -30,7 +30,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <stdio.h>
-
+#include "debug.h"
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif /* HAVE_UNISTD_H */
@@ -169,6 +169,7 @@ save_tty_chars (TIOTYPE *tiop)
 static int
 get_tty_settings (int tty, TIOTYPE *tiop)
 {
+  dlog("readline");
   set_winsize (tty);
 
   tiop->flags = tiop->lflag = 0;
@@ -236,6 +237,7 @@ set_tty_settings (int tty, TIOTYPE *tiop)
 static void
 prepare_terminal_settings (int meta_flag, TIOTYPE oldtio, TIOTYPE *tiop)
 {
+  dlog("readline");
   _rl_echoing_p = (oldtio.sgttyb.sg_flags & ECHO);
   _rl_echoctl = (oldtio.sgttyb.sg_flags & ECHOCTL);
 
@@ -598,7 +600,7 @@ rl_prep_terminal (int meta_flag)
 {
   int tty, nprep;
   TIOTYPE tio;
-
+  dlog("readline");
   if (terminal_prepped)
     return;
 

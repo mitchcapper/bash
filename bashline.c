@@ -57,6 +57,7 @@
 #include "trap.h"
 #include "flags.h"
 #include "timer.h"
+#include "osfixes.h"
 
 #if defined (HAVE_MBSTR_H) && defined (HAVE_MBSCHR)
 #  include <mbstr.h>		/* mbschr */
@@ -2588,7 +2589,7 @@ bash_servicename_completion_function (text, state)
      int state;
 {
 #if defined (__WIN32__) || defined (__OPENNT) || !defined (HAVE_GETSERVENT)
-  return ((char *)NULL);
+  return (char*) dcalledint(0,"BASH");
 #else
   static char *sname = (char *)NULL;
   static struct servent *srvent;
@@ -2646,7 +2647,7 @@ bash_groupname_completion_function (text, state)
      int state;
 {
 #if defined (__WIN32__) || defined (__OPENNT) || !defined (HAVE_GRP_H)
-  return ((char *)NULL);
+  return ((char *)dcalledint(0,"BASH"));
 #else
   static char *gname = (char *)NULL;
   static struct group *grent;
@@ -4805,14 +4806,10 @@ bash_event_hook ()
   else if (interrupt_state)
     sig = SIGINT;
   else if (read_timeout && read_timeout->alrmflag){
-#ifndef _WIN32
     sig = SIGALRM;
-#endif
   }else if (RL_ISSTATE (RL_STATE_TIMEOUT))		/* just in case */
     {
-#ifndef _WIN32
       sig = SIGALRM;
-#endif
       if (read_timeout)
 	read_timeout->alrmflag = 1;
     }

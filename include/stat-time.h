@@ -156,7 +156,7 @@ get_stat_mtime (struct stat const *st)
   return t;
 #endif
 }
-
+#ifndef _WIN32//gnu provided
 static inline int
 timespec_cmp (struct timespec a, struct timespec b)
 {
@@ -166,6 +166,7 @@ timespec_cmp (struct timespec a, struct timespec b)
 		 ? 1
 		 : (int) (a.tv_nsec - b.tv_nsec)));
 }
+#endif
 
 /* Return *ST's birth time, if available; otherwise return a value
    with tv_sec and tv_nsec both equal to -1.  */

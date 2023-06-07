@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with Bash.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+
 #define IN
 #define WORD USHORT
 #include "config.h"
@@ -41,7 +43,7 @@
 #endif
 #include "filecntl.h"
 #include "posixstat.h"
-#include <signal.h>
+#include "../gnu/signal.h"
 #if defined (HAVE_SYS_PARAM_H)
 #  include <sys/param.h>
 #endif
@@ -85,6 +87,7 @@ extern int errno;
 #include "redir.h"
 #include "trap.h"
 #include "pathexp.h"
+#include "osfixes.h"
 #include "hashcmd.h"
 
 #if defined (COND_COMMAND)
@@ -114,6 +117,7 @@ extern int errno;
 #if defined (HAVE_MBSTR_H) && defined (HAVE_MBSCHR)
 #  include <mbstr.h>		/* mbschr */
 #endif
+
 
 extern int command_string_index;
 extern char *the_printed_command;
@@ -356,8 +360,9 @@ dispose_fd_bitmap (fdbp)
 }
 
 void
-close_fd_bitmap (fdbp)
+close_fd_bitmap (fdbp, exec)
      struct fd_bitmap *fdbp;
+	HandleExec* exec;
 {
   register int i;
 
@@ -366,8 +371,12 @@ close_fd_bitmap (fdbp)
       for (i = 0; i < fdbp->size; i++)
 	if (fdbp->bitmap[i])
 	  {
-	    close (i);
-	    fdbp->bitmap[i] = 0;
+		if (exec)
+			posix_spawn_file_actions_addclose(exec->actions, i);
+		else {
+			close(i);
+			fdbp->bitmap[i] = 0;
+		}
 	  }
     }
 }
@@ -407,8 +416,7 @@ executing_line_number ()
    return values.  Executing a command with nothing in it returns
    EXECUTION_SUCCESS. */
 int
-execute_command (command)
-     COMMAND *command;
+execute_command (COMMAND* command)
 {
   struct fd_bitmap *bitmap;
   int result;
@@ -550,9 +558,19 @@ open_files (void)
 #endif
 
 void
-async_redirect_stdin ()
+async_redirect_stdin (HandleExec * exec)
 {
   int fd;
+  if (exec) {
+	  posix_spawn_file_actions_addopen(exec->actions, 0,
+#ifdef _WIN32
+		  "NUL"
+#else
+		  "/dev/null"
+#endif
+		  , O_RDONLY, 0);
+	  return;
+  }
 
   fd = open ("/dev/null", O_RDONLY);
   if (fd > 0)
@@ -579,12 +597,8 @@ async_redirect_stdin ()
    return values.  Executing a command with nothing in it returns
    EXECUTION_SUCCESS. */
 int
-execute_command_internal (command, asynchronous, pipe_in, pipe_out,
-			  fds_to_close)
-     COMMAND *command;
-     int asynchronous;
-     int pipe_in, pipe_out;
-     struct fd_bitmap *fds_to_close;
+execute_command_internal (COMMAND* command, int asynchronous, int pipe_in, int pipe_out,
+	struct fd_bitmap* fds_to_close)
 {
   int exec_result, user_subshell, invert, ignore_return, was_error_trap, fork_flags;
   REDIRECT *my_undo_list, *exec_undo_list;
@@ -1176,11 +1190,7 @@ static const int precs[] = { 0, 100, 10, 1 };
 
 /* Expand one `%'-prefixed escape sequence from a time format string. */
 static int
-mkfmt (buf, prec, lng, sec, sec_fraction)
-     char *buf;
-     int prec, lng;
-     time_t sec;
-     int sec_fraction;
+mkfmt (char* buf, int prec, int lng, time_t sec, int sec_fraction)
 {
   time_t min;
   char abuf[INT_STRLEN_BOUND(time_t) + 1];
@@ -1652,7 +1662,7 @@ execute_in_subshell (command, asynchronous, pipe_in, pipe_out, fds_to_close)
      redirect the standard input from /dev/null in the absence of
      any specific redirection involving stdin. */
   if (should_redir_stdin && stdin_redir == 0)
-    async_redirect_stdin ();
+    async_redirect_stdin (NULL);
 
 #if defined (BUFFERED_INPUT)
   /* In any case, we are not reading our command input from stdin. */
@@ -1830,7 +1840,9 @@ cpl_add (cp)
 
   return cpe;
 }
-
+static int tester(int bob) {
+	printf("HI JOHN");
+}
 static struct cpelement *
 cpl_delete (pid)
      pid_t pid;
@@ -3397,8 +3409,7 @@ select_query (list, list_len, prompt, print_menu)
    Only `break' or `return' in command_list will terminate
    the command. */
 static int
-execute_select_command (select_command)
-     SELECT_COM *select_command;
+execute_select_command(SELECT_COM* select_command)
 {
   WORD_LIST *releaser, *list;
   SHELL_VAR *v;
@@ -4362,10 +4373,7 @@ is_dirname (pathname)
    real execution of commands here.  Fork a process, set things up,
    execute the command. */
 static int
-execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
-     SIMPLE_COM *simple_command;
-     int pipe_in, pipe_out, async;
-     struct fd_bitmap *fds_to_close;
+execute_simple_command (SIMPLE_COM * simple_command, int pipe_in, int pipe_out, int async, struct fd_bitmap* fds_to_close)
 {
   WORD_LIST *words, *lastword;
   char *command_line, *lastarg, *temp;
@@ -4450,23 +4458,21 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
       /* Don't let a DEBUG trap overwrite the command string to be saved with
 	 the process/job associated with this child. */
       fork_flags = async ? FORK_ASYNC : 0;
-      if (make_child (p = savestring (the_printed_command_except_trap), fork_flags) == 0)
-	{
+	  //STILL NEEDS TO BE DONEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+	  HandleExec* exec = GetNewExec();
+	  int pid = make_child(p = savestring(the_printed_command_except_trap), fork_flags, exec);
+#pragma region AmChild
+	if (pid == 0 || exec){
 	  already_forked = 1;
 	  cmdflags |= CMD_NO_FORK;
 
-	  /* We redo some of what make_child() does with SUBSHELL_IGNTRAP */
-	  subshell_environment = SUBSHELL_FORK|SUBSHELL_IGNTRAP;	/* XXX */
-	  if (pipe_in != NO_PIPE || pipe_out != NO_PIPE)
-	    subshell_environment |= SUBSHELL_PIPE;
-	  if (async)
-	    subshell_environment |= SUBSHELL_ASYNC;
+	  
 
 	  /* We need to do this before piping to handle some really
 	     pathological cases where one of the pipe file descriptors
 	     is < 2. */
 	  if (fds_to_close)
-	    close_fd_bitmap (fds_to_close);
+	    close_fd_bitmap (fds_to_close, exec);
 
 	  /* If we fork because of an input pipe, note input pipe for later to
 	     inhibit async commands from redirecting stdin from /dev/null */
@@ -4487,7 +4493,9 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
 	  FREE (p);			/* child doesn't use pointer */
 #endif
 	}
-      else
+#pragma endregion
+#pragma region AmParent
+      if (pid > 0 || exec) //parent
 	{
 	  /* Don't let simple commands that aren't the last command in a
 	     pipeline change $? for the rest of the pipeline (or at all). */
@@ -4497,7 +4505,8 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
 	  command_line = (char *)NULL;      /* don't free this. */
 	  return (result);
 	}
-    }
+#pragma endregion
+    }//do fork end
 
   QUIT;		/* XXX */
 
@@ -4730,7 +4739,7 @@ run_builtin:
 	      if ((cmdflags & CMD_STDIN_REDIR) &&
 		    pipe_in == NO_PIPE &&
 		    (stdin_redirects (simple_command->redirects) == 0))
-		async_redirect_stdin ();
+		async_redirect_stdin (NULL);
 	      setup_async_signals ();
 	    }
 
@@ -5297,9 +5306,8 @@ execute_function (var, words, flags, fds_to_close, async, subshell)
 /* A convenience routine for use by other parts of the shell to execute
    a particular shell function. */
 int
-execute_shell_function (var, words)
-     SHELL_VAR *var;
-     WORD_LIST *words;
+execute_shell_function(SHELL_VAR* var, WORD_LIST* words, HandleExec* exec)
+
 {
   int ret;
   struct fd_bitmap *bitmap;
@@ -5592,16 +5600,9 @@ setup_async_signals ()
 #ifndef NOTFOUND_HOOK
 #  define NOTFOUND_HOOK "command_not_found_handle"
 #endif
-
 static int
-execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
-		      async, fds_to_close, cmdflags)
-     WORD_LIST *words;
-     REDIRECT *redirects;
-     char *command_line;
-     int pipe_in, pipe_out, async;
-     struct fd_bitmap *fds_to_close;
-     int cmdflags;
+execute_disk_command (WORD_LIST* words, REDIRECT* redirects, char* command_line, int pipe_in, int pipe_out,
+	int async, struct fd_bitmap* fds_to_close, int cmdflags)
 {
   char *pathname, *command, **args, *p;
   int nofork, stdpath, result, fork_flags;
@@ -5655,22 +5656,18 @@ execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
      of COMMAND, since we want the error messages to be redirected. */
   /* If we can get away without forking and there are no pipes to deal with,
      don't bother to fork, just directly exec the command. */
+  HandleExec* exec = GetNewExec();
   if (nofork && pipe_in == NO_PIPE && pipe_out == NO_PIPE)
     pid = 0;
   else
     {
       fork_flags = async ? FORK_ASYNC : 0;
-      pid = make_child (p = savestring (command_line), fork_flags);
+      pid = make_child (p = savestring (command_line), fork_flags, exec);
     }
 
-  if (pid == 0)
+  if (pid == 0 || exec)//child setup items
     {
       int old_interactive;
-
-      reset_terminating_signals ();	/* XXX */
-      /* Cancel traps, in trap.c. */
-      restore_original_signals ();
-      subshell_environment &= ~SUBSHELL_IGNTRAP;
 
 #if defined (JOB_CONTROL)
       FREE (p);
@@ -5684,8 +5681,8 @@ execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
 	  if ((cmdflags & CMD_STDIN_REDIR) &&
 		pipe_in == NO_PIPE &&
 		(stdin_redirects (redirects) == 0))
-	    async_redirect_stdin ();
-	  setup_async_signals ();
+	    async_redirect_stdin (exec);
+		//setup_async_signals ();
 	}
 
       /* This functionality is now provided by close-on-exec of the
@@ -5694,9 +5691,9 @@ execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
 	 because of the way bash does pipes; fds_to_close is a
 	 bitmap of all such file descriptors. */
       if (fds_to_close)
-	close_fd_bitmap (fds_to_close);
+	close_fd_bitmap (fds_to_close, exec);
 
-      do_piping (pipe_in, pipe_out);
+      do_piping (pipe_in, pipe_out, exec);
 
       old_interactive = interactive;
       if (async)
@@ -5710,12 +5707,12 @@ execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
 
       /* reset shell_pgrp to pipeline_pgrp here for word expansions performed
          by the redirections here? */
-      if (redirects && (do_redirections (redirects, RX_ACTIVE) != 0))
+      if (redirects && (do_redirections (redirects, RX_ACTIVE, exec) != 0))
 	{
 #if defined (PROCESS_SUBSTITUTION)
 	  /* Try to remove named pipes that may have been created as the
 	     result of redirections. */
-	  unlink_all_fifos ();
+	  //unlink_all_fifos (); //for children this wouldn't be needed hopefully? we only setup the fifos we needed?
 #endif /* PROCESS_SUBSTITUTION */
 	  exit (EXECUTION_FAILURE);
 	}
@@ -5750,16 +5747,30 @@ execute_disk_command (words, redirects, command_line, pipe_in, pipe_out,
 #endif
 
 	  wl = make_word_list (make_word (NOTFOUND_HOOK), words);
-	  exit (execute_shell_function (hookf, wl));
+	  exit (execute_shell_function (hookf, wl, NULL));//need to port this as we need to execute another bash basically
 	}
 
       /* Execve expects the command name to be in args[0].  So we
 	 leave it there, in the same format that the user used to
 	 type it in. */
       args = strvec_from_word_list (words, 0, 0, (int *)NULL);
-      exit (shell_execve (command, args, export_env));
+	  if (exec) {
+		  pid_t* pid;
+		  exec->cmd = command;
+		  exec->envp = export_env;
+		  exec->args = args;
+		  if (posix_spawnp(&exec->child_pid, exec->cmd, exec->actions, exec->attrp, exec->args, exec->envp)) {
+			  sys_error("fork");
+			  last_command_exit_value = EX_NOEXEC;
+			  throw_to_top_level();
+		  }
+		  UpdatePidInfoAfterSpawn(exec);
+
+	  }
+	  else
+	      exit (shell_execve (command, args, export_env));
     }
-  else
+  if (pid > 0 || exec) //if parent
     {
 parent_return:
       QUIT;
@@ -5773,7 +5784,7 @@ parent_return:
 #endif
 #endif
       FREE (command);
-      return (result);
+      return (exec->child_pid);
     }
 }
 
@@ -6117,9 +6128,7 @@ shell_execve (command, args, env)
 }
 
 static int
-execute_intern_function (name, funcdef)
-     WORD_DESC *name;
-     FUNCTION_DEF *funcdef;
+execute_intern_function(WORD_DESC* name, FUNCTION_DEF* funcdef)
 {
   SHELL_VAR *var;
   char *t;
@@ -6202,15 +6211,21 @@ dup_error (oldd, newd)
 /* Redirect input and output to be from and to the specified pipes.
    NO_PIPE and REDIRECT_BOTH are handled correctly. */
 static void
-do_piping (pipe_in, pipe_out)
+do_piping (pipe_in, pipe_out, exec)
      int pipe_in, pipe_out;
+HandleExec* exec;
 {
   if (pipe_in != NO_PIPE)
     {
-      if (dup2 (pipe_in, 0) < 0)
-	dup_error (pipe_in, 0);
-      if (pipe_in > 0)
-	close (pipe_in);
+	  if (exec)
+		posix_spawn_file_actions_adddup2(exec->actions, pipe_in, 0);
+	  else {
+
+		  if (dup2(pipe_in, 0) < 0)
+			  dup_error(pipe_in, 0);
+		  if (pipe_in > 0)
+			  close(pipe_in);
+	  }
 #ifdef __CYGWIN__
       /* Let stdio know the fd may have changed from text to binary mode. */
       freopen (NULL, "r", stdin);
@@ -6220,14 +6235,21 @@ do_piping (pipe_in, pipe_out)
     {
       if (pipe_out != REDIRECT_BOTH)
 	{
-	  if (dup2 (pipe_out, 1) < 0)
-	    dup_error (pipe_out, 1);
-	  if (pipe_out == 0 || pipe_out > 1)
-	    close (pipe_out);
+		  if (exec)
+			  posix_spawn_file_actions_adddup2(exec->actions, pipe_out, 1);
+		  else {
+			  if (dup2(pipe_out, 1) < 0)
+				  dup_error(pipe_out, 1);
+			  if (pipe_out == 0 || pipe_out > 1)
+				  close(pipe_out);
+		  }
 	}
       else
 	{
-	  if (dup2 (1, 2) < 0)
+		if (exec)
+			posix_spawn_file_actions_adddup2(exec->actions, 1, 2);
+
+	  else if (dup2 (1, 2) < 0)
 	    dup_error (1, 2);
 	}
 #ifdef __CYGWIN__

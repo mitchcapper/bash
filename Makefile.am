@@ -214,7 +214,13 @@ TERMCAP_LIBRARY = $(TERM_LIBDIR)/libtermcap.a
 
 GLOB_LIBDIR = $(dot)/$(LIBSUBDIR)/glob
 GLOB_LIBRARY = $(GLOB_LIBDIR)/libglob.a
-bash_LDADD = $(GLOB_LIBRARY) $(TERMCAP_LIBRARY) $(TILDE_LIBRARY) $(READLINE_LIBRARY) $(SHLIB_LIBRARY) $(BUILTINS_LIBRARY)
+BASH_ALWAYSLD = $(GLOB_LIBRARY) $(TERMCAP_LIBRARY) $(TILDE_LIBRARY) $(READLINE_LIBRARY) $(SHLIB_LIBRARY) $(BUILTINS_LIBRARY)
+if USE_PDCURSES #test env var for now
+bash_LDADD = ${BASH_ALWAYSLD}
+else
+bash_LDADD = ${BASH_ALWAYSLD}
+endif
+
 TILDE_LIBDIR = $(dot)/$(LIBSUBDIR)/tilde
 TILDE_LIBRARY = $(TILDE_LIBDIR)/libtilde.a
 
@@ -263,7 +269,7 @@ CSOURCES = shell.c eval.c parse.y general.c make_cmd.c print_cmd.c  \
 	   input.c bashhist.c array.c arrayfunc.c assoc.c sig.c pathexp.c \
 	   unwind_prot.c siglist.c bashline.c bracecomp.c error.c \
 	   list.c stringlib.c locale.c findcmd.c redir.c \
-	   pcomplete.c pcomplib.c syntax.c xmalloc.c
+	   pcomplete.c pcomplib.c syntax.c xmalloc.c debug.c osfixes.c
 
 # headers in top-level source directory that get installed by install-headers
 INSTALLEDHEADERS = shell.h bashjmp.h command.h syntax.h general.h error.h \
@@ -399,7 +405,8 @@ y.tab.c: parse.y
 y.tab.h: y.tab.c
 	@true
 
- 
+debug.$(OBJEXT): debug.c
+
 signames.$(OBJEXT): $(SUPPORT_SRC)signames.c
 	$(RM) $@
 	$(CC) $(CCFLAGS) -c $(SUPPORT_SRC)signames.c

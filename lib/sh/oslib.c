@@ -145,7 +145,7 @@ dup2 (fd1, fd2)
  *	return (sysconf(_SC_OPEN_MAX));
  *
  */
-
+#ifndef _WIN32
 #if !defined (HAVE_GETDTABLESIZE)
 int
 getdtablesize ()
@@ -165,6 +165,7 @@ getdtablesize ()
 #  endif /* ! (_POSIX_VERSION && _SC_OPEN_MAX) */
 }
 #endif /* !HAVE_GETDTABLESIZE */
+#endif
 
 #if !defined (HAVE_BCOPY)
 #  if defined (bcopy)

@@ -110,6 +110,8 @@ shtimer_set (sh_timer *t, time_t sec, long usec)
       t->alrmflag = 0;		/* just paranoia */
 #ifndef _WIN32
       t->old_handler = set_signal_handler (SIGALRM, t->alrm_handler);
+#else
+      dcalled("SIG");
 #endif
       t->flags |= SHTIMER_SIGSET;
       falarm (t->tmout.tv_sec = sec, t->tmout.tv_usec = usec);

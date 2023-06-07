@@ -28,6 +28,7 @@
 #ifndef errno
 extern int errno;
 #endif
+#ifndef  _WIN32
 
 #if IS_BASIC_ASCII
 
@@ -42,7 +43,7 @@ const unsigned int is_basic_table [UCHAR_MAX / 32 + 1] =
 };
 
 #endif /* IS_BASIC_ASCII */
-
+#endif
 extern int locale_utf8locale;
 
 extern char *utf8_mbsmbchar (const char *);

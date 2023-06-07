@@ -367,9 +367,7 @@ create_variable_tables ()
    If PRIVMODE is nonzero, don't import functions from ENV or
    parse $SHELLOPTS. */
 void
-initialize_shell_variables (env, privmode)
-     char **env;
-     int privmode;
+initialize_shell_variables (char** env, int privmode)
 {
   char *name, *string, *temp_string;
   int c, char_index, string_index, string_length, ro;
@@ -393,6 +391,10 @@ initialize_shell_variables (env, privmode)
 
       /* ASSERT(name[char_index] == '=') */
       name[char_index] = '\0';
+#ifdef _WIN32
+	  strupr(name);//convert all ENV vars to uppercase
+#endif // _WIN32
+
       /* Now, name = env variable name, string = env variable value, and
 	 char_index == strlen (name) */
 

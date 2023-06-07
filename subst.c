@@ -6915,12 +6915,8 @@ read_comsub (fd, quoted, flags, rflag)
 
 /* Perform command substitution on STRING.  This returns a WORD_DESC * with the
    contained string possibly quoted. */
-WORD_DESC *
-command_substitute (string, quoted, flags)
-     char *string;
-     int quoted;
-     int flags;
-{
+WORD_DESC* command_substitute(char* string, int quoted, int flags){
+
   pid_t pid, old_pid, old_pipeline_pgrp, old_async_pid;
   char *istring, *s;
   int result, fildes[2], function_value, pflags, rc, tflag, fork_flags;
@@ -7006,24 +7002,25 @@ command_substitute (string, quoted, flags)
 
   old_async_pid = last_asynchronous_pid;
   fork_flags = (subshell_environment&SUBSHELL_ASYNC) ? FORK_ASYNC : 0;
-  pid = make_child ((char *)NULL, fork_flags|FORK_NOTERM);
+  HandleExec* exec = GetNewExec();
+  pid = make_child ((char *)NULL, fork_flags|FORK_NOTERM, exec);
   last_asynchronous_pid = old_async_pid;
-
-  if (pid == 0)
-    {
-      /* Reset the signal handlers in the child, but don't free the
-	 trap strings.  Set a flag noting that we have to free the
-	 trap strings if we run trap to change a signal disposition. */
-      reset_signal_handlers ();
-      if (ISINTERRUPT)
-	{
-	  kill (getpid (), SIGINT);
-	  CLRINTERRUPT;		/* if we're ignoring SIGINT somehow */
-	}	
-      QUIT;	/* catch any interrupts we got post-fork */
-      subshell_environment |= SUBSHELL_RESETTRAP;
-      subshell_environment &= ~SUBSHELL_IGNTRAP;
-    }
+  
+ // if (pid == 0)
+ //   {
+ //     /* Reset the signal handlers in the child, but don't free the
+	// trap strings.  Set a flag noting that we have to free the
+	// trap strings if we run trap to change a signal disposition. */
+ //     reset_signal_handlers ();
+ //     if (ISINTERRUPT)
+	//{
+	//  kill (getpid (), SIGINT);
+	//  CLRINTERRUPT;		/* if we're ignoring SIGINT somehow */
+	//}	
+ //     QUIT;	/* catch any interrupts we got post-fork */
+ //     subshell_environment |= SUBSHELL_RESETTRAP;
+ //     subshell_environment &= ~SUBSHELL_IGNTRAP;
+ //   }
 
 #if defined (JOB_CONTROL)
   /* XXX DO THIS ONLY IN PARENT ? XXX */
@@ -7035,7 +7032,7 @@ command_substitute (string, quoted, flags)
   stop_making_children ();
 #endif /* JOB_CONTROL */
 
-  if (pid < 0)
+  if (pid < 0 && !exec)
     {
       sys_error (_("cannot make child for command substitution"));
     error_exit:
@@ -7048,10 +7045,10 @@ command_substitute (string, quoted, flags)
       return ((WORD_DESC *)NULL);
     }
 
-  if (pid == 0)
+  if (pid == 0 || exec)
     {
       /* The currently executing shell is not interactive. */
-      interactive = 0;
+      //interactive = 0;
 
 #if defined (JOB_CONTROL)
       /* Invariant: in child processes started to run command substitutions,
@@ -7060,19 +7057,19 @@ command_substitute (string, quoted, flags)
 	shell_pgrp = pipeline_pgrp;
 #endif
 
-      set_sigint_handler ();	/* XXX */
+      //set_sigint_handler ();	/* XXX */
 
-      free_pushed_string_input ();
+      //free_pushed_string_input ();
 
       /* Discard  buffered stdio output before replacing the underlying file
 	 descriptor. */
-      fpurge (stdout);
-
-      if (dup2 (fildes[1], 1) < 0)
+      /*fpurge (stdout);*/
+	  posix_spawn_file_actions_adddup2(exec->actions, fildes[1], 1);
+      /*if (dup2 (fildes[1], 1) < 0)
 	{
 	  sys_error ("%s", _("command_substitute: cannot duplicate pipe as fd 1"));
 	  exit (EXECUTION_FAILURE);
-	}
+	}*/
 
       /* If standard output is closed in the parent shell
 	 (such as after `exec >&-'), file descriptor 1 will be
@@ -7080,15 +7077,16 @@ command_substitute (string, quoted, flags)
 	 fildes[0].  This can happen for stdin and stderr as well,
 	 but stdout is more important -- it will cause no output
 	 to be generated from this command. */
-      if ((fildes[1] != fileno (stdin)) &&
-	  (fildes[1] != fileno (stdout)) &&
-	  (fildes[1] != fileno (stderr)))
-	close (fildes[1]);
+	  if ((fildes[1] != fileno(stdin)) &&
+		  (fildes[1] != fileno(stdout)) &&
+		  (fildes[1] != fileno(stderr)))
+		  posix_spawn_file_actions_addclose(exec->actions, fildes[1]);
+	
 
       if ((fildes[0] != fileno (stdin)) &&
 	  (fildes[0] != fileno (stdout)) &&
 	  (fildes[0] != fileno (stderr)))
-	close (fildes[0]);
+		  posix_spawn_file_actions_addclose(exec->actions, fildes[0]);
 
 #ifdef __CYGWIN__
       /* Let stdio know the fd may have changed from text to binary mode, and
@@ -7098,7 +7096,7 @@ command_substitute (string, quoted, flags)
 #endif /* __CYGWIN__ */
 
       /* This is a subshell environment. */
-      subshell_environment |= SUBSHELL_COMSUB;
+      //subshell_environment |= SUBSHELL_COMSUB;
 
       /* Many shells do not appear to inherit the -v option for command
 	 substitutions. */
@@ -7111,20 +7109,21 @@ command_substitute (string, quoted, flags)
           builtin_ignoring_errexit = 0;
 	  change_flag ('e', FLAG_OFF);
         }
-      set_shellopts ();
-
+      set_shellopts (exec);//sets the SHELLOPT env var 
+	  //posix_spawnp
+	  //YEAQH TODO ZZZZZZZZZZZZZZZ still def need to work on this
       /* If we are expanding a redirection, we can dispose of any temporary
 	 environment we received, since redirections are not supposed to have
 	 access to the temporary environment.  We will have to see whether this
 	 affects temporary environments supplied to `eval', but the temporary
 	 environment gets copied to builtin_env at some point. */
-      if (expanding_redir)
+      /*if (expanding_redir)
 	{
 	  flush_temporary_env ();
 	  expanding_redir = 0;
-	}
+	}*/
 
-      remove_quoted_escapes (string);
+      //remove_quoted_escapes (string);
 
       /* We want to expand aliases on this pass if we are not in posix mode
 	 for backwards compatibility. parse_and_execute() takes care of
@@ -7161,18 +7160,32 @@ command_substitute (string, quoted, flags)
       else
 	{
 	  subshell_level++;
-	  rc = parse_and_execute (string, "command substitution", pflags|SEVAL_NOHIST);
+	  DupeOrUpdateEnvVarPair(exec, "HISTFILE", "");
+	  exec->args = malloc(sizeof(char*) * 3);
+	  exec->args[0] = "-c";
+	  exec->args[1] = string;
+	  exec->args[2] = 0;
+	  if (posix_spawnp(&exec->child_pid, "bash.exe", exec->actions, exec->attrp, exec->args, exec->envp)) {
+		  free(exec->args);
+		  sys_error("fork");
+		  last_command_exit_value = EX_NOEXEC;
+		  throw_to_top_level();
+	  }
+	  UpdatePidInfoAfterSpawn(exec);
+	  pid = exec->child_pid;
+	  free(exec->args);
+	  //rc = parse_and_execute (string, "command substitution", pflags|SEVAL_NOHIST);
 	  /* leave subshell level intact for any exit trap */
 	}
 
-      last_command_exit_value = rc;
+      /*last_command_exit_value = rc;
       rc = run_exit_trap ();
 #if defined (PROCESS_SUBSTITUTION)
       unlink_fifo_list ();
 #endif
-      exit (rc);
+      exit (rc);*/
     }
-  else
+  if (pid != 0 || exec) //We are the parent
     {
       int dummyfd;
 

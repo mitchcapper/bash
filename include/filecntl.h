@@ -33,8 +33,8 @@
 #define SET_CLOSE_ON_EXEC(fd)  (fcntl ((fd), F_SETFD, FD_CLOEXEC))
 #define SET_OPEN_ON_EXEC(fd)   (fcntl ((fd), F_SETFD, FD_NCLOEXEC))
 #else
-#define SET_CLOSE_ON_EXEC(fd)  (-1)
-#define SET_OPEN_ON_EXEC(fd)    (-1)
+#define SET_CLOSE_ON_EXEC(fd)  (dcalledintMacro(-1,"fork","SET_CLOSE_ON_EXEC",NULL))
+#define SET_OPEN_ON_EXEC(fd)    (dcalledintMacro(-1,"fork","SET_OPEN_ON_EXEC",NULL))
 #endif
 
 /* How to open a file in non-blocking mode, the Posix.1 way. */

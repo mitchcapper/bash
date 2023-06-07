@@ -26,7 +26,7 @@
 #define INSTALL_DEBUG_MODE
 
 #include "config.h"
-
+#include "debug.h"
 #include "bashtypes.h"
 #ifdef _WIN32
 #define HAVE_UNISTD_H
@@ -64,6 +64,7 @@
 #include "mailcheck.h"
 #include "builtins.h"
 #include "builtins/common.h"
+#include "osfixes.h"
 
 #if defined (JOB_CONTROL)
 #include "jobs.h"
@@ -368,17 +369,11 @@ _cygwin32_check_tmp ()
 
 #if defined (NO_MAIN_ENV_ARG)
 /* systems without third argument to main() */
-int
-main (argc, argv)
-     int argc;
-     char **argv;
+int main(int argc, char** argv) {
 #else /* !NO_MAIN_ENV_ARG */
-int
-main (argc, argv, env)
-     int argc;
-     char **argv, **env;
+int main(int argc, char** argv, char** env) {
 #endif /* !NO_MAIN_ENV_ARG */
-{
+
   register int i;
   int code, old_errexit_flag;
 #if defined (RESTRICTED_SHELL)
@@ -1702,13 +1697,13 @@ open_shell_script (script_name)
   /* Open the script.  But try to move the file descriptor to a randomly
      large one, in the hopes that any descriptors used by the script will
      not match with ours. */
-  fd = move_to_high_fd (fd, 1, -1);
+  fd = move_to_high_fd_w_flags (fd, 1, -1, O_CLOEXEC);
 
 #if defined (BUFFERED_INPUT)
   default_buffered_input = fd;
-  SET_CLOSE_ON_EXEC (default_buffered_input);
+  //SET_CLOSE_ON_EXEC (default_buffered_input);
 #else /* !BUFFERED_INPUT */
-  default_input = fdopen (fd, "r");
+  default_input = fdopen (fd, "re");
 
   if (default_input == 0)
     {
@@ -1716,9 +1711,9 @@ open_shell_script (script_name)
       exit (EX_NOTFOUND);
     }
 
-  SET_CLOSE_ON_EXEC (fd);
+  /*SET_CLOSE_ON_EXEC (fd);
   if (fileno (default_input) != fd)
-    SET_CLOSE_ON_EXEC (fileno (default_input));
+    SET_CLOSE_ON_EXEC (fileno (default_input));*/
 #endif /* !BUFFERED_INPUT */
 
   /* Just about the only way for this code to be executed is if something
@@ -1776,13 +1771,19 @@ set_bash_input ()
    is non-zero, we close default_buffered_input even if it's the standard
    input (fd 0). */
 void
-unset_bash_input (check_zero)
+unset_bash_input (check_zero, exec)
      int check_zero;
+	HandleExec* exec;
 {
 #if defined (BUFFERED_INPUT)
   if ((check_zero && default_buffered_input >= 0) ||
       (check_zero == 0 && default_buffered_input > 0))
     {
+	  if (exec) {
+		  posix_spawn_file_actions_addclose(exec->actions, default_buffered_input);
+		  return;
+	  }
+
       close_buffered_fd (default_buffered_input);
       default_buffered_input = bash_input.location.buffered_fd = -1;
       bash_input.type = st_none;		/* XXX */
@@ -1903,7 +1904,13 @@ init_interactive_script ()
 void
 get_current_user_info ()
 {
-#ifndef _WIN32
+#ifdef  _WIN32
+	current_user.user_name = savestring(getlogin());
+	//	  current_user.user_name = savestring (current_user.user_name);
+	current_user.shell = savestring("bash");
+	current_user.home_dir = savestring(getenv("USERPROFILE"));
+
+#else
   struct passwd *entry;
 
   /* Don't fetch this more than once. */
@@ -1924,12 +1931,12 @@ get_current_user_info ()
 	}
       else
 	{
-#endif
+
 	  current_user.user_name = _("I have no name!");
 //	  current_user.user_name = savestring (current_user.user_name);
 	  current_user.shell = savestring ("/bin/sh");
 	  current_user.home_dir = savestring ("/");
-#ifndef _WIN32
+
 	}
 #if defined (HAVE_GETPWENT)
       endpwent ();
@@ -1967,15 +1974,12 @@ shell_initialize ()
   /* It's highly unlikely that this will change. */
   if (current_host_name == 0)
     {
-#ifndef _WIN32
+
       /* Initialize current_host_name. */
       if (gethostname (hostname, 255) < 0)
 	current_host_name = "??host??";
       else
 	current_host_name = savestring (hostname);
-#else
-  current_host_name = "??host??";
-#endif
     }
 
   /* Initialize the stuff in current_user that comes from the password

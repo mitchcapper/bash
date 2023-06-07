@@ -333,6 +333,8 @@ extern int sh_validfd PARAMS((int));
 extern int fd_ispipe PARAMS((int));
 extern void check_dev_tty PARAMS((void));
 extern int move_to_high_fd PARAMS((int, int, int));
+extern int move_to_high_fd_w_flags PARAMS((int, int, int, int));
+
 extern int check_binary_file PARAMS((const char *, int));
 
 #ifdef _POSIXSTAT_H_
@@ -357,6 +359,7 @@ extern char *trim_pathname PARAMS((char *, int));
 extern char *printable_filename PARAMS((char *, int));
 
 extern char *extract_colon_unit PARAMS((char *, int *));
+extern char *extract_path_unit PARAMS((char*, int*));
 
 extern void tilde_initialize PARAMS((void));
 extern char *bash_tilde_find_word PARAMS((const char *, int, int *));

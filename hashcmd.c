@@ -124,8 +124,7 @@ phash_insert (filename, full_path, check_dot, found)
    returns a newly-allocated string; the caller is responsible
    for freeing it. */
 char *
-phash_search (filename)
-     const char *filename;
+phash_search (const char* filename)
 {
   register BUCKET_CONTENTS *item;
   char *path, *dotted_filename, *tail;

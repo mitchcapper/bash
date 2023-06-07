@@ -378,7 +378,7 @@ reset_locale_vars ()
 #  if defined (LC_COLLATE)
   t = setlocale (LC_COLLATE, get_locale_var ("LC_COLLATE"));
 #  endif
-#  if defined (LC_MESSAGES)
+#  if defined (LC_MESSAGES) && ! defined(_WIN32)
   t = setlocale (LC_MESSAGES, get_locale_var ("LC_MESSAGES"));
 #  endif
 #  if defined (LC_NUMERIC)

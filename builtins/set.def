@@ -482,11 +482,7 @@ bash_set_history (on_or_off, option_name)
 }
 #endif
 
-int
-set_minus_o_option (on_or_off, option_name)
-     int on_or_off;
-     char *option_name;
-{
+int set_minus_o_option(int on_or_off, char* option_name) {
   register int i;
 
   i = find_minus_o_option (option_name);
@@ -538,9 +534,8 @@ print_all_shell_variables ()
 	}
     }
 }
-
-void
-set_shellopts ()
+#include "osfixes.h"
+void set_shellopts (HandleExec * exec)
 {
   char *value;
   char tflag[N_O_OPTIONS];
@@ -583,26 +578,28 @@ set_shellopts ()
   value[vptr] = '\0';
 
   v = find_variable ("SHELLOPTS");
+  if (exec)
+	  DupeEnvVarPair(exec, "SHELLOPTS", value);
+  else {
+	  /* Turn off the read-only attribute so we can bind the new value, and
+		 note whether or not the variable was exported. */
+	  if (v)
+	  {
+		  VUNSETATTR(v, att_readonly);
+		  exported = exported_p(v);
+	  }
+	  else
+		  exported = 0;
 
-  /* Turn off the read-only attribute so we can bind the new value, and
-     note whether or not the variable was exported. */
-  if (v)
-    {
-      VUNSETATTR (v, att_readonly);
-      exported = exported_p (v);
-    }
-  else
-    exported = 0;
+	  v = bind_variable("SHELLOPTS", value, 0);
 
-  v = bind_variable ("SHELLOPTS", value, 0);
-
-  /* Turn the read-only attribute back on, and turn off the export attribute
-     if it was set implicitly by mark_modified_vars and SHELLOPTS was not
-     exported before we bound the new value. */
-  VSETATTR (v, att_readonly);
-  if (mark_modified_vars && exported == 0 && exported_p (v))
-    VUNSETATTR (v, att_exported);
-
+	  /* Turn the read-only attribute back on, and turn off the export attribute
+		 if it was set implicitly by mark_modified_vars and SHELLOPTS was not
+		 exported before we bound the new value. */
+	  VSETATTR(v, att_readonly);
+	  if (mark_modified_vars && exported == 0 && exported_p(v))
+		  VUNSETATTR(v, att_exported);
+  }
   free (value);
 }
 
@@ -644,7 +641,7 @@ initialize_shell_options (no_shellopts)
     }
 
   /* Set up the $SHELLOPTS variable. */
-  set_shellopts ();
+  set_shellopts (NULL);
 }
 
 /* Reset the values of the -o options that are not also shell flags.  This is
@@ -773,7 +770,7 @@ set_builtin (list)
 		  opts_changed = 1;
 		  if ((r = set_minus_o_option (on_or_off, option_name)) != EXECUTION_SUCCESS)
 		    {
-		      set_shellopts ();
+		      set_shellopts (NULL);
 		      return (r);
 		    }
 		}
@@ -784,7 +781,7 @@ set_builtin (list)
 		  s[2] = '\0';
 		  sh_invalidopt (s);
 		  builtin_usage ();
-		  set_shellopts ();
+		  set_shellopts (NULL);
 		  return (EXECUTION_FAILURE);
 		}
 	      opts_changed = 1;
@@ -802,7 +799,7 @@ set_builtin (list)
     remember_args (list, 1);
   /* Set up new value of $SHELLOPTS */
   if (opts_changed)
-    set_shellopts ();
+    set_shellopts (NULL);
   return (rv);
 }
 

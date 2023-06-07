@@ -294,12 +294,7 @@ parse_prologue (string, flags, tag)
    	(flags & SEVAL_NOOPTIMIZE) -> don't try to turn on optimizing flags
 */
 
-int
-parse_and_execute (string, from_file, flags)
-     char *string;
-     const char *from_file;
-     int flags;
-{
+int parse_and_execute(char* string, const char* from_file, int flags) {
   int code, lreset;
   volatile int should_jump_to_top_level, last_result;
   COMMAND *volatile command;

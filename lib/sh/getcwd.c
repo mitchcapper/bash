@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#if !defined (HAVE_GETCWD)
+#if !defined (HAVE_GETCWD) && !defined(_WIN32)
 
 #if !defined (__GNUC__) && !defined (HAVE_ALLOCA_H) && defined (_AIX)
   #pragma alloca

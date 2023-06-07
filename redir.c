@@ -241,19 +241,20 @@ redirection_error (temp, error, fn)
    is non-zero, file descriptors opened in do_redirection () have their
    close-on-exec flag set. */
 int
-do_redirections (list, flags)
+do_redirections (list, flags, exec)
      REDIRECT *list;
      int flags;
+	 HandleExec* exec;
 {
   int error;
   REDIRECT *temp;
   char *fn;
 
-  if (flags & RX_UNDOABLE)
+  if (flags & RX_UNDOABLE && ! exec)//for exec i dont think we woudl have any redirects after spawn
     {
       if (redirection_undo_list)
 	{
-	  dispose_redirects (redirection_undo_list);
+		dispose_redirects (redirection_undo_list);
 	  redirection_undo_list = (REDIRECT *)NULL;
 	}
       if (exec_redirection_undo_list)
@@ -263,7 +264,7 @@ do_redirections (list, flags)
   for (temp = list; temp; temp = temp->next)
     {
       fn = 0;
-      error = do_redirection_internal (temp, flags, &fn);
+      error = do_redirection_internal (temp, flags, &fn, exec);
       if (error)
 	{
 	  redirection_error (temp, error, fn);
@@ -787,10 +788,11 @@ undoablefd (fd)
    close-on-exec. FNP, if non-null is a pointer to a location where the
    expanded filename is stored. The caller will free it. */
 static int
-do_redirection_internal (redirect, flags, fnp)
+do_redirection_internal (redirect, flags, fnp, exec)
      REDIRECT *redirect;
      int flags;
      char **fnp;
+	 HandleExec* exec;
 {
   WORD_DESC *redirectee;
   int redir_fd, fd, redirector, r, oflags;
@@ -821,7 +823,7 @@ do_redirection_internal (redirect, flags, fnp)
 	{
 	  sd = redirect->redirector;
 	  rd.dest = 0;
-	  new_redirect = make_redirection (sd, r_close_this, rd, 0);
+	  new_redirect = make_redirection (sd, r_close_this, rd, 0); //does not actually do any redirection just creates teh structs one woudl use to do
 	}
       else if (redirectee_word == 0)
 	return (AMBIGUOUS_REDIRECT);
@@ -899,7 +901,7 @@ do_redirection_internal (redirect, flags, fnp)
       redirect->flags = new_redirect->flags;
       dispose_redirects (new_redirect);
     }
-
+  //TODO: Only have translations up to here this gets complicated avoided for eere
   switch (ri)
     {
     case r_output_direction:
