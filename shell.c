@@ -366,6 +366,26 @@ _cygwin32_check_tmp ()
     }
 }
 #endif /* __CYGWIN__ */
+#ifdef  _WIN32
+void SetupConsoleHandle(BOOL is_input, HANDLE handle) {
+	if (handle == INVALID_HANDLE_VALUE)
+		return;
+	DWORD mode = 0;
+	if (!GetConsoleMode(handle, &mode))
+		return;
+	if (is_input)
+		mode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
+	else
+		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	
+	SetConsoleMode(handle, mode);
+}
+void SetupConsole(void) {
+	SetupConsoleHandle(FALSE, GetStdHandle(STD_ERROR_HANDLE));
+	SetupConsoleHandle(FALSE, GetStdHandle(STD_OUTPUT_HANDLE));
+	SetupConsoleHandle(TRUE, GetStdHandle(STD_INPUT_HANDLE));
+}
+#endif //  _WIN32
 
 #if defined (NO_MAIN_ENV_ARG)
 /* systems without third argument to main() */
@@ -395,7 +415,11 @@ int main(int argc, char** argv, char** env) {
 #if defined (RESTRICTED_SHELL)
   USE_VAR(saverst);
 #endif
+#ifdef  _WIN32
+  SetupConsole();
+#endif //  _WIN32
 
+  dbgInit("c:/temp/bash.log");
   /* Catch early SIGINTs. */
   code = setjmp_nosigs (top_level);
   if (code)
